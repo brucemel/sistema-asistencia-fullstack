@@ -1,0 +1,4572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Asistencia con Cálculo de Sueldo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #1e293b;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* LOGIN STYLES */
+        .login-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-title {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+        }
+
+        .demo-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        /* FORM STYLES */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        textarea.form-input {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* BUTTONS */
+        .btn {
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .btn-danger:hover {
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ERROR MESSAGE */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger-color);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: var(--card-bg);
+            padding: 15px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--card-border);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .navbar-brand {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-role {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-logout {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            transform: scale(1.05);
+        }
+
+        /* CARD */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* SALARY BOX */
+        .salary-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .salary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+        }
+
+        .salary-row:last-child {
+            border-bottom: none;
+        }
+
+        .salary-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .salary-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--success-color);
+        }
+
+        /* TABLE */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--card-border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+            color: var(--text-secondary);
+        }
+
+        tr:hover {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        /* BADGE */
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .badge-complete {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-incomplete {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .badge-no-work {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-rest {
+            background: rgba(100, 116, 139, 0.2);
+            color: var(--text-muted);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        /* CLOCK & ATTENDANCE */
+        .clock-display {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(37, 99, 235, 0.05));
+            border: 2px solid rgba(37, 99, 235, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .current-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .current-date {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        .day-type-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .day-type-badge.work-day {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .day-type-badge.rest-day {
+            background: linear-gradient(135deg, rgba(100, 116, 139, 0.2), rgba(100, 116, 139, 0.1));
+            color: var(--text-muted);
+            border: 1px solid rgba(100, 116, 139, 0.3);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .status-indicator.not-started {
+            background: rgba(100, 116, 139, 0.2);
+            color: var(--text-muted);
+        }
+
+        .status-indicator.working {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.finished {
+            background: rgba(37, 99, 235, 0.2);
+            color: var(--primary-color);
+        }
+
+        .status-indicator.no-work {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-entry {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-entry:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-exit {
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            color: white;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-exit:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-no-work {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
+            color: white;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            width: 100%;
+            margin-top: 15px;
+        }
+
+        .btn-no-work:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-entry:disabled, .btn-exit:disabled, .btn-no-work:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .time-record-box {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .time-record-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
+        }
+
+        .time-record-row:last-child {
+            border-bottom: none;
+        }
+
+        .time-record-label {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-record-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .time-record-value.pending {
+            color: var(--text-muted);
+        }
+
+        /* CUSTOM ALERT MODAL */
+        .custom-alert-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .custom-alert-overlay.show {
+            display: flex;
+        }
+
+        .custom-alert-box {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            border: 2px solid var(--card-border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease-out;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .custom-alert-icon {
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .custom-alert-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .custom-alert-message {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .custom-alert-message ul {
+            text-align: left;
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+
+        .custom-alert-message li {
+            margin-bottom: 8px;
+        }
+
+        .custom-alert-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .custom-alert-buttons .btn {
+            flex: 1;
+            padding: 14px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 650px;
+            width: 90%;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modalSlideIn 0.3s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: var(--danger-color);
+            transform: rotate(90deg);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+        }
+
+        /* CHECKBOX GROUP */
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-label:hover {
+            background: rgba(37, 99, 235, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"]:checked + span {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        /* AUTO CALC BOX */
+        .auto-calc-box {
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .auto-calc-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .auto-calc-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .auto-calc-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .info-panel {
+            background: rgba(37, 99, 235, 0.1);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .info-panel p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .info-panel code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .info-box {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* ============================================ */
+        /* RESPONSIVE DESIGN - OPTIMIZADO IPHONE 15 PRO */
+        /* ============================================ */
+
+        /* iPhone 15 Pro y dispositivos similares (393px width) */
+        @media (max-width: 430px) {
+            body {
+                font-size: 16px; /* Previene zoom automático en iOS */
+            }
+
+            .screen {
+                padding: 15px;
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            .login-container {
+                padding: 20px 15px;
+            }
+
+            .login-card {
+                padding: 30px 20px;
+                margin: 10px;
+                width: calc(100% - 20px);
+            }
+
+            .login-title {
+                font-size: 1.6rem;
+                line-height: 1.2;
+            }
+
+            .login-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .demo-badge {
+                font-size: 0.8rem;
+                padding: 5px 10px;
+            }
+
+            /* Navbar completamente vertical */
+            .navbar {
+                flex-direction: column;
+                padding: 15px;
+                gap: 12px;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+                text-align: center;
+                width: 100%;
+            }
+
+            .navbar-user {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+
+            .user-info {
+                text-align: center;
+                width: 100%;
+            }
+
+            .user-name {
+                font-size: 1rem;
+            }
+
+            .user-role {
+                font-size: 0.85rem;
+            }
+
+            .btn-logout {
+                width: 100%;
+                padding: 12px;
+            }
+
+            /* Cards optimizadas */
+            .card {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+                border-radius: 15px;
+            }
+
+            .card-title {
+                font-size: 1.2rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            /* Dashboard grid - siempre 1 columna */
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            /* Info grid - 2 columnas para aprovechar espacio */
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .info-box {
+                padding: 15px 10px;
+            }
+
+            .info-label {
+                font-size: 0.75rem;
+                margin-bottom: 6px;
+            }
+
+            .info-value {
+                font-size: 1.3rem;
+            }
+
+            /* Salary box */
+            .salary-box {
+                padding: 18px 15px;
+                margin-bottom: 20px;
+            }
+
+            .salary-row {
+                padding: 12px 0;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .salary-label {
+                font-size: 0.9rem;
+                flex: 1;
+            }
+
+            .salary-value {
+                font-size: 1.2rem;
+                text-align: right;
+            }
+
+            /* Clock display */
+            .clock-display {
+                padding: 20px 15px;
+            }
+
+            .current-time {
+                font-size: 2.2rem;
+            }
+
+            .config-badge {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+                margin-top: 8px;
+            }
+
+            .day-type-badge {
+                font-size: 0.85rem;
+                padding: 8px 14px;
+                margin-top: 10px;
+            }
+
+            .status-indicator {
+                font-size: 0.85rem;
+                padding: 8px 14px;
+                margin-top: 12px;
+            }
+
+            /* Buttons */
+            .action-buttons {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .btn-entry, .btn-exit {
+                padding: 16px 20px;
+                font-size: 1rem;
+                width: 100%;
+            }
+
+            .btn-no-work {
+                padding: 16px 20px;
+                font-size: 1rem;
+                width: 100%;
+                margin-bottom: 20px;
+            }
+
+            .btn {
+                padding: 14px 18px;
+                font-size: 0.95rem;
+            }
+
+            .btn-primary, .btn-success {
+                width: 100%;
+            }
+
+            /* Forms */
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-label {
+                font-size: 0.9rem;
+                margin-bottom: 8px;
+            }
+
+            .form-input {
+                padding: 14px 12px;
+                font-size: 16px; /* Importante para iOS */
+                border-radius: 10px;
+            }
+
+            select.form-input {
+                padding: 14px 12px;
+                font-size: 16px;
+            }
+
+            /* Modals - optimizado para iPhone */
+            .modal {
+                padding: 10px;
+            }
+
+            .modal-content {
+                padding: 25px 20px;
+                width: calc(100% - 20px);
+                max-height: 85vh;
+                border-radius: 20px;
+            }
+
+            .modal-header {
+                margin-bottom: 20px;
+                flex-wrap: wrap;
+            }
+
+            .modal-title {
+                font-size: 1.3rem;
+                flex: 1;
+            }
+
+            .modal-close {
+                font-size: 1.8rem;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 25px;
+            }
+
+            .modal-buttons .btn {
+                width: 100%;
+                padding: 16px;
+            }
+
+            /* Month navigation - todo vertical */
+            .card > div:has(#monthSelector) {
+                flex-direction: column !important;
+                gap: 12px !important;
+                width: 100%;
+            }
+
+            .card > div:has(#monthSelector) > h3 {
+                width: 100%;
+            }
+
+            .card > div:has(#monthSelector) > div {
+                width: 100%;
+                flex-direction: column !important;
+                gap: 10px;
+            }
+
+            #monthSelector {
+                width: 100% !important;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .card > div:has(#monthSelector) button {
+                width: 100%;
+                margin: 0;
+                padding: 14px;
+                font-size: 0.95rem;
+            }
+
+            /* Tables - scroll optimizado */
+            .table-wrapper {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                border-radius: 12px;
+                margin: 0 -15px;
+                padding: 0 15px;
+            }
+
+            table {
+                font-size: 0.8rem;
+                min-width: 900px;
+            }
+
+            th {
+                padding: 12px 8px;
+                font-size: 0.8rem;
+            }
+
+            td {
+                padding: 12px 8px;
+            }
+
+            .badge {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+
+            /* Admin stats - 2 columnas en móvil */
+            .admin-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .stat-card {
+                padding: 18px 15px;
+            }
+
+            .stat-icon {
+                font-size: 2.2rem;
+                margin-bottom: 8px;
+            }
+
+            .stat-value {
+                font-size: 1.6rem;
+            }
+
+            .stat-label {
+                font-size: 0.85rem;
+            }
+
+            /* Checkboxes - 2 columnas */
+            .checkbox-group {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .checkbox-label {
+                padding: 10px 8px;
+                font-size: 0.85rem;
+            }
+
+            .checkbox-label input[type="checkbox"] {
+                width: 20px;
+                height: 20px;
+            }
+
+            /* Auto calc box */
+            .auto-calc-box {
+                padding: 15px;
+                margin-top: 15px;
+            }
+
+            .auto-calc-title {
+                font-size: 0.95rem;
+                margin-bottom: 12px;
+            }
+
+            .auto-calc-row {
+                font-size: 0.85rem;
+                padding: 10px 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .auto-calc-value {
+                font-size: 1.1rem;
+            }
+
+            /* Info panel */
+            .info-panel {
+                padding: 15px;
+                font-size: 0.85rem;
+                margin-top: 20px;
+            }
+
+            .info-panel p {
+                font-size: 0.85rem;
+                line-height: 1.5;
+            }
+
+            .info-panel code {
+                font-size: 0.8rem;
+                padding: 3px 6px;
+            }
+
+            /* Notifications */
+            .notification {
+                left: 10px;
+                right: 10px;
+                top: 10px;
+                padding: 14px 16px;
+                font-size: 0.9rem;
+            }
+
+            /* Error messages */
+            .error-message {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+
+            /* Specific iPhone 15 Pro optimizations */
+            .screen {
+                min-height: calc(100vh - 30px);
+            }
+
+            /* Safe area para notch */
+            @supports (padding: max(0px)) {
+                .navbar {
+                    padding-top: max(15px, env(safe-area-inset-top));
+                }
+
+                .modal-content {
+                    padding-bottom: max(25px, env(safe-area-inset-bottom));
+                }
+
+                .screen {
+                    padding-bottom: max(15px, env(safe-area-inset-bottom));
+                }
+            }
+        }
+
+        /* Mobile devices general (hasta 768px) */
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* Tablet breakpoint */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .admin-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .modal-content {
+                max-width: 85%;
+            }
+
+            .container {
+                max-width: 95%;
+            }
+
+            .card {
+                padding: 25px;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Large tablets and small desktops */
+        @media (min-width: 1025px) and (max-width: 1399px) {
+            .container {
+                max-width: 1200px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Large desktop breakpoint */
+        @media (min-width: 1400px) {
+            .container {
+                max-width: 1600px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .admin-stats {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* Landscape phone orientation - iPhone 15 Pro horizontal */
+        @media (max-width: 852px) and (orientation: landscape) {
+            .login-container {
+                padding: 15px 20px;
+                min-height: auto;
+            }
+
+            .login-card {
+                margin: 15px auto;
+                max-width: 600px;
+            }
+
+            .modal-content {
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+
+            .clock-display {
+                padding: 15px;
+            }
+
+            .current-time {
+                font-size: 1.8rem;
+            }
+
+            .info-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Touch-friendly adjustments */
+        @media (hover: none) and (pointer: coarse) {
+            /* Mínimo 44px para elementos táctiles (Apple HIG) */
+            .btn, .checkbox-label, .modal-close {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .form-input, select {
+                min-height: 48px;
+            }
+
+            .checkbox-label input[type="checkbox"] {
+                width: 22px;
+                height: 22px;
+            }
+
+            /* Área táctil más grande para botones importantes */
+            .btn-entry, .btn-exit, .btn-no-work {
+                min-height: 50px;
+                padding: 16px;
+            }
+
+            .btn-logout {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+
+            /* Hint visual para scroll en tablas */
+            .table-wrapper::after {
+                content: '← Desliza horizontalmente →';
+                display: block;
+                text-align: center;
+                padding: 12px;
+                background: rgba(37, 99, 235, 0.1);
+                color: var(--primary-color);
+                font-size: 0.85rem;
+                font-weight: 600;
+                border-radius: 0 0 12px 12px;
+                margin-top: 10px;
+            }
+
+            /* Botones con feedback táctil */
+            .btn:active {
+                transform: scale(0.98);
+                opacity: 0.9;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .navbar, .btn, .modal-close, .notification, .action-buttons {
+                display: none !important;
+            }
+
+            .card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+
+            .modal-content {
+                box-shadow: none;
+                border: 1px solid #000;
+            }
+
+            .table-wrapper::after {
+                display: none;
+            }
+        }
+
+        /* Dark mode support para iOS */
+        @media (prefers-color-scheme: dark) {
+            /* El sistema ya usa dark mode por defecto */
+        }
+
+        /* Reduce motion para usuarios que lo prefieren */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ADMIN SETUP SCREEN (First time only) -->
+    <div id="adminSetupScreen" class="screen">
+        <div class="login-container">
+            <div class="login-card" style="max-width: 600px;">
+                <div class="login-header">
+                    <h1 class="login-title">🏢 Configuración Inicial</h1>
+                    <p class="login-subtitle">Configura tu empresa y cuenta de administrador</p>
+                    <span class="demo-badge">🔧 Primera vez</span>
+                </div>
+
+                <div id="setupError" class="error-message"></div>
+
+                <form id="adminSetupForm">
+                    <div style="background: rgba(37, 99, 235, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 1.1rem;">
+                            🏢 Datos de la Empresa
+                        </h3>
+
+                        <div class="form-group">
+                            <label class="form-label">Nombre de la Empresa</label>
+                            <input 
+                                type="text" 
+                                id="companyName" 
+                                class="form-input" 
+                                placeholder="Ej: Tech Solutions S.A.C."
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">RUC / ID Fiscal</label>
+                            <input 
+                                type="text" 
+                                id="companyRuc" 
+                                class="form-input" 
+                                placeholder="Ej: 20123456789"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Dirección</label>
+                            <input 
+                                type="text" 
+                                id="companyAddress" 
+                                class="form-input" 
+                                placeholder="Ej: Av. Principal 123, Lima"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Teléfono</label>
+                            <input 
+                                type="tel" 
+                                id="companyPhone" 
+                                class="form-input" 
+                                placeholder="Ej: +51 999 888 777"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Email de la Empresa</label>
+                            <input 
+                                type="email" 
+                                id="companyEmail" 
+                                class="form-input" 
+                                placeholder="Ej: contacto@empresa.com"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                        <h3 style="color: var(--success-color); margin-bottom: 15px; font-size: 1.1rem;">
+                            👤 Cuenta del Administrador
+                        </h3>
+
+                        <div class="form-group">
+                            <label class="form-label">Nombre Completo del Jefe</label>
+                            <input 
+                                type="text" 
+                                id="adminFullName" 
+                                class="form-input" 
+                                placeholder="Ej: Juan Pérez García"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Email del Jefe</label>
+                            <input 
+                                type="email" 
+                                id="adminEmail" 
+                                class="form-input" 
+                                placeholder="Ej: juan@empresa.com"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Usuario de Administrador</label>
+                            <input 
+                                type="text" 
+                                id="adminUsername" 
+                                class="form-input" 
+                                placeholder="Ej: admin o jperez"
+                                required
+                            >
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">
+                                Sin espacios, solo letras y números
+                            </p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Contraseña</label>
+                            <input 
+                                type="password" 
+                                id="adminPassword" 
+                                class="form-input" 
+                                placeholder="Mínimo 6 caracteres"
+                                required
+                                minlength="6"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Confirmar Contraseña</label>
+                            <input 
+                                type="password" 
+                                id="adminPasswordConfirm" 
+                                class="form-input" 
+                                placeholder="Repite la contraseña"
+                                required
+                                minlength="6"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="info-panel">
+                        <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 10px;">
+                            ℹ️ Información Importante:
+                        </p>
+                        <p style="margin-bottom: 8px;">
+                            • Esta configuración se realiza <strong>una sola vez</strong>
+                        </p>
+                        <p style="margin-bottom: 8px;">
+                            • Podrás cambiar estos datos desde tu panel de administrador
+                        </p>
+                        <p style="margin-bottom: 8px;">
+                            • La contraseña debe ser segura y fácil de recordar
+                        </p>
+                        <p>
+                            • Todos los empleados serán agregados después desde el panel
+                        </p>
+                    </div>
+
+                    <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 20px;">
+                        🚀 Completar Configuración
+                    </button>
+                </form>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button type="button" class="btn btn-primary" style="padding: 10px 20px; font-size: 0.9rem;" onclick="skipSetupAndUseDemo()">
+                        ⚡ Saltar y usar datos de demostración
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1 class="login-title">💰 Sistema de Asistencia</h1>
+                    <p class="login-subtitle">Con Cálculo de Sueldo</p>
+                    <span class="demo-badge">✨ Versión Demo</span>
+                </div>
+
+                <div id="loginError" class="error-message"></div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">👤 Usuario</label>
+                        <input 
+                            type="text" 
+                            id="loginUsername" 
+                            class="form-input" 
+                            placeholder="Ingresa tu usuario"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">🔒 Contraseña</label>
+                        <input 
+                            type="password" 
+                            id="loginPassword" 
+                            class="form-input" 
+                            placeholder="Ingresa tu contraseña"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        INICIAR SESIÓN
+                    </button>
+                </form>
+
+                <!-- CUENTAS DEMO -->
+                <div style="margin-top: 25px; padding-top: 25px; border-top: 2px solid var(--card-border);">
+                    <h3 style="color: var(--text-primary); text-align: center; margin-bottom: 20px; font-size: 1.1rem;">
+                        🎯 Cuentas de Demostración
+                    </h3>
+                    
+                    <!-- Admin Demo -->
+                    <div style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(37, 99, 235, 0.05)); border: 1px solid rgba(37, 99, 235, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s ease;" onclick="fillLogin('admin', '123')" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; color: var(--primary-color); font-size: 1rem;">
+                                    👑 ADMINISTRADOR
+                                </div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
+                                    Usuario: <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">admin</code> 
+                                    | Contraseña: <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">123</code>
+                                </div>
+                            </div>
+                            <div style="background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                                Click para usar
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empleado 1 Demo -->
+                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s ease;" onclick="fillLogin('bwayne', '123')" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; color: var(--success-color); font-size: 1rem;">
+                                    👤 EMPLEADO - Bruce Wayne
+                                </div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
+                                    Usuario: <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">bwayne</code> 
+                                    | Contraseña: <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">123</code>
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">
+                                    💰 S/ 700/mes | ⏰ 5h/día | 📅 Lun-Vie
+                                </div>
+                            </div>
+                            <div style="background: var(--success-color); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                                Click para usar
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empleado 2 Demo -->
+                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.3s ease;" onclick="fillLogin('ckent', '123')" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; color: var(--success-color); font-size: 1rem;">
+                                    👤 EMPLEADO - Clark Kent
+                                </div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
+                                    Usuario: <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">ckent</code> 
+                                    | Contraseña: <code style="background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">123</code>
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">
+                                    💰 S/ 1,200/mes | ⏰ 8h/día | 📅 Lun-Sáb
+                                </div>
+                            </div>
+                            <div style="background: var(--success-color); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                                Click para usar
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button type="button" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.9rem;" onclick="goToSetup()">
+                        ➕ Crear Nueva Empresa
+                    </button>
+                    <button type="button" style="margin-top: 10px; background: transparent; border: 1px solid var(--danger-color); color: var(--danger-color); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; width: 100%;" onclick="resetAllData()">
+                        🗑️ Resetear Todo (Borrar Caché)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EMPLOYEE SCREEN -->
+    <div id="employeeScreen" class="screen">
+        <div class="container">
+            <nav class="navbar">
+                <span class="navbar-brand">💰 Mi Panel</span>
+                <div class="navbar-user">
+                    <div class="user-info">
+                        <div class="user-name" id="empUserName">Empleado</div>
+                        <div class="user-role">👤 Empleado</div>
+                    </div>
+                    <button class="btn-logout" onclick="logout()">Salir</button>
+                </div>
+            </nav>
+
+            <!-- SECCIÓN DE MARCAJE DE ASISTENCIA (PRIMERO) -->
+            <div class="card">
+                <h2 class="card-title">⏰ Registro de Asistencia</h2>
+                
+                <!-- Reloj y Fecha -->
+                <div class="clock-display">
+                    <div class="current-time" id="currentTime">00:00:00</div>
+                    <div class="current-date" id="currentDate">Cargando...</div>
+                    <div class="day-type-badge work-day" id="dayTypeBadge">
+                        📅 Día Laboral
+                    </div>
+                    <div class="status-indicator not-started" id="workStatus">
+                        ⏳ Sin iniciar
+                    </div>
+                </div>
+
+                <!-- Registro de Tiempos -->
+                <div class="time-record-box">
+                    <div class="time-record-row">
+                        <span class="time-record-label">🟢 Hora de Entrada:</span>
+                        <span class="time-record-value pending" id="entryTimeDisplay">--:--</span>
+                    </div>
+                    <div class="time-record-row">
+                        <span class="time-record-label">🔴 Hora de Salida:</span>
+                        <span class="time-record-value pending" id="exitTimeDisplay">--:--</span>
+                    </div>
+                    <div class="time-record-row">
+                        <span class="time-record-label">⏱️ Tiempo Trabajado:</span>
+                        <span class="time-record-value" id="workedTimeDisplay" style="color: var(--success-color);">0:00:00</span>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="action-buttons">
+                    <button class="btn-entry" id="btnEntry" onclick="markEntry()">
+                        🟢 MARCAR ENTRADA
+                    </button>
+                    <button class="btn-exit" id="btnExit" onclick="markExit()" disabled>
+                        🔴 MARCAR SALIDA
+                    </button>
+                </div>
+
+                <button class="btn-no-work" id="btnNoWork" onclick="markNoWork()">
+                    🚫 MARCAR COMO NO TRABAJO HOY
+                </button>
+
+                <div id="noWorkReasonContainer" style="display: none; margin-top: 20px;">
+                    <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 20px; border-radius: 12px;">
+                        <h4 style="color: var(--warning-color); margin-bottom: 15px;">📝 Razón de Ausencia</h4>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label class="form-label">Tipo de Ausencia:</label>
+                            <select id="noWorkType" class="form-input">
+                                <option value="">-- Selecciona una opción --</option>
+                                <option value="permiso">📋 Permiso Personal</option>
+                                <option value="medico">🏥 Cita Médica / Enfermedad</option>
+                                <option value="familiar">👨‍👩‍👧 Emergencia Familiar</option>
+                                <option value="vacaciones">🏖️ Día de Vacaciones</option>
+                                <option value="feriado">🎉 Feriado</option>
+                                <option value="otro">📝 Otro (especificar)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label class="form-label">Descripción / Detalle:</label>
+                            <textarea id="noWorkDetail" class="form-input" rows="3" placeholder="Describe brevemente la razón de tu ausencia..." style="resize: vertical;"></textarea>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-success" style="flex: 1;" onclick="confirmNoWork()">
+                                ✅ Confirmar Ausencia
+                            </button>
+                            <button class="btn btn-danger" style="flex: 1;" onclick="cancelNoWork()">
+                                ❌ Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-panel" style="margin-top: 20px;">
+                    <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 10px;">
+                        💡 ¿Cómo funciona?
+                    </p>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px;">
+                        • Si es <strong>día laboral</strong> y no marcas nada → <span style="color: var(--danger-color);">Se descuenta el día</span>
+                    </p>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px;">
+                        • Si es <strong>domingo o día de descanso</strong> → <span style="color: var(--success-color);">No se descuenta</span>
+                    </p>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px;">
+                        • <strong>Feriados y vacaciones</strong> → <span style="color: var(--success-color);">No se descuenta</span>
+                    </p>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">
+                        • <strong>Permisos sin autorización</strong> → <span style="color: var(--danger-color);">Se descuenta el día</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- SECCIÓN DE CONFIGURACIÓN SALARIAL (SEGUNDO) -->
+            <div class="card">
+                <h2 class="card-title">💰 Mi Configuración Salarial</h2>
+                <div class="salary-box">
+                    <div class="salary-row">
+                        <span class="salary-label">Sueldo Mensual:</span>
+                        <span class="salary-value" id="empSalaryMonthly">S/ 0.00</span>
+                    </div>
+                    <div class="salary-row">
+                        <span class="salary-label">Sueldo Diario:</span>
+                        <span class="salary-value" id="empSalaryDaily">S/ 0.00</span>
+                    </div>
+                    <div class="salary-row">
+                        <span class="salary-label">Sueldo por Hora:</span>
+                        <span class="salary-value" id="empSalaryHourly">S/ 0.00</span>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">
+                    ℹ️ Tu sueldo mensual es fijo. Las horas extra se pagan aparte.
+                </p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h2 class="card-title">📊 Hoy</h2>
+                    <div class="info-grid">
+                        <div class="info-box">
+                            <div class="info-label">Horas</div>
+                            <div class="info-value" id="empTodayHours">0:00</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Extra</div>
+                            <div class="info-value" style="color: var(--success-color);" id="empTodayExtra">0:00</div>
+                        </div>
+                    </div>
+                    <div class="salary-box" style="margin-top: 20px;">
+                        <div class="salary-row">
+                            <span class="salary-label">Pago Base Hoy:</span>
+                            <span class="salary-value" id="empTodayBasePay">S/ 0.00</span>
+                        </div>
+                        <div class="salary-row">
+                            <span class="salary-label">Pago por Extras:</span>
+                            <span class="salary-value" id="empTodayExtraPay">S/ 0.00</span>
+                        </div>
+                        <div class="salary-row" style="border-top: 2px solid rgba(16, 185, 129, 0.3); padding-top: 15px; margin-top: 10px;">
+                            <span class="salary-label" style="font-weight: 700; color: var(--text-primary);">Total Ganado Hoy:</span>
+                            <span class="salary-value" style="font-size: 1.4rem;" id="empTodayTotalPay">S/ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 class="card-title">📅 Esta Semana</h2>
+                    <div class="info-grid">
+                        <div class="info-box">
+                            <div class="info-label">Días</div>
+                            <div class="info-value" id="empWeekDays">0</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Horas</div>
+                            <div class="info-value" id="empWeekHours">0:00</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Extra</div>
+                            <div class="info-value" style="color: var(--success-color);" id="empWeekExtra">0:00</div>
+                        </div>
+                    </div>
+                    <div class="salary-box" style="margin-top: 20px;">
+                        <div class="salary-row">
+                            <span class="salary-label">Pago por Extras:</span>
+                            <span class="salary-value" id="empWeekExtraPay">S/ 0.00</span>
+                        </div>
+                        <div class="salary-row" style="border-top: 2px solid rgba(16, 185, 129, 0.3); padding-top: 15px; margin-top: 10px;">
+                            <span class="salary-label" style="font-weight: 700; color: var(--text-primary);">Total Extras Semana:</span>
+                            <span class="salary-value" style="font-size: 1.4rem;" id="empWeekTotalExtraPay">S/ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN DE HISTORIAL DE ASISTENCIA -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <h2 class="card-title" style="margin: 0;">📋 Historial de Asistencia</h2>
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <label style="color: var(--text-secondary); font-size: 0.9rem;">Filtrar por mes:</label>
+                        <select id="historyMonthFilter" class="form-input" style="width: auto; padding: 10px 15px;" onchange="loadAttendanceHistory()">
+                            <!-- Opciones generadas dinámicamente -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Resumen del mes -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div class="info-box">
+                        <div class="info-label">Días Trabajados</div>
+                        <div class="info-value" style="color: var(--success-color);" id="historyDaysWorked">0</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Días Ausentes</div>
+                        <div class="info-value" style="color: var(--danger-color);" id="historyDaysAbsent">0</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Horas Totales</div>
+                        <div class="info-value" id="historyTotalHours">0:00</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-label">Horas Extra</div>
+                        <div class="info-value" style="color: var(--success-color);" id="historyExtraHours">0:00</div>
+                    </div>
+                </div>
+
+                <!-- Resumen de pago del mes -->
+                <div class="salary-box" style="margin-bottom: 25px;">
+                    <div class="salary-row">
+                        <span class="salary-label">Sueldo Base del Mes:</span>
+                        <span class="salary-value" id="historyBaseSalary">S/ 0.00</span>
+                    </div>
+                    <div class="salary-row" style="color: var(--danger-color);">
+                        <span class="salary-label">Descuentos por Ausencias:</span>
+                        <span class="salary-value" style="color: var(--danger-color);" id="historyDeductions">- S/ 0.00</span>
+                    </div>
+                    <div class="salary-row">
+                        <span class="salary-label">Pago por Horas Extra:</span>
+                        <span class="salary-value" style="color: var(--success-color);" id="historyExtraPay">+ S/ 0.00</span>
+                    </div>
+                    <div class="salary-row" style="border-top: 2px solid rgba(16, 185, 129, 0.3); padding-top: 15px; margin-top: 10px;">
+                        <span class="salary-label" style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem;">TOTAL A RECIBIR:</span>
+                        <span class="salary-value" style="font-size: 1.5rem;" id="historyTotalPay">S/ 0.00</span>
+                    </div>
+                </div>
+
+                <!-- Tabla de historial -->
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Día</th>
+                                <th>Entrada</th>
+                                <th>Salida</th>
+                                <th>Horas</th>
+                                <th>Extra</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                    Selecciona un mes para ver el historial
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="info-panel" style="margin-top: 20px;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">
+                        💡 <strong>Leyenda:</strong> 
+                        <span style="color: var(--success-color);">✅ Completo</span> | 
+                        <span style="color: var(--warning-color);">⚠️ Incompleto</span> | 
+                        <span style="color: var(--danger-color);">🚫 No trabajó</span> | 
+                        <span style="color: var(--text-muted);">🏖️ Descanso</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN SCREEN -->
+    <div id="adminScreen" class="screen">
+        <div class="container">
+            <nav class="navbar">
+                <span class="navbar-brand">👑 Panel de Administración</span>
+                <div class="navbar-user">
+                    <button class="btn btn-primary" style="padding: 10px 20px; font-size: 0.9rem;" onclick="showCompanyInfoModal()">
+                        🏢 Datos de la Empresa
+                    </button>
+                    <div class="user-info">
+                        <div class="user-name" id="adminUserName">Administrador</div>
+                        <div class="user-role">👑 Jefe/Admin</div>
+                    </div>
+                    <button class="btn-logout" onclick="logout()">Salir</button>
+                </div>
+            </nav>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <h2 class="card-title" style="margin: 0;">👥 Gestión de Empleados</h2>
+                    <button class="btn btn-success" onclick="showAddEmployeeModal()">
+                        ➕ Agregar Empleado
+                    </button>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Nombre</th>
+                                <th>Horas/Día</th>
+                                <th>Días</th>
+                                <th>Sueldo</th>
+                                <th>S/Hora</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeesTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                    Cargando empleados...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD EMPLOYEE MODAL -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">➕ Agregar Empleado</h2>
+                <button class="modal-close" onclick="closeEmployeeModal()">×</button>
+            </div>
+
+            <div id="modalError" class="error-message"></div>
+
+            <form id="employeeForm">
+                <div class="form-group">
+                    <label class="form-label">👤 Usuario (sin espacios)</label>
+                    <input 
+                        type="text" 
+                        id="empUsername" 
+                        class="form-input" 
+                        placeholder="Ej: bwayne"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📝 Nombre Completo</label>
+                    <input 
+                        type="text" 
+                        id="empFullName" 
+                        class="form-input" 
+                        placeholder="Ej: Bruce Wayne"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📧 Email</label>
+                    <input 
+                        type="email" 
+                        id="empEmail" 
+                        class="form-input" 
+                        placeholder="Ej: bruce@empresa.com"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🔒 Contraseña</label>
+                    <input 
+                        type="password" 
+                        id="empPassword" 
+                        class="form-input" 
+                        placeholder="Contraseña inicial"
+                        required
+                    >
+                </div>
+
+                <div style="background: rgba(37, 99, 235, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 1.1rem;">
+                        ⚙️ Configuración Laboral
+                    </h3>
+
+                    <div class="form-group">
+                        <label class="form-label">⏰ Horas de Trabajo Diarias</label>
+                        <select id="empDailyHours" class="form-input" required onchange="updateSalaryCalculations()">
+                            <option value="4">4 horas/día</option>
+                            <option value="5" selected>5 horas/día</option>
+                            <option value="6">6 horas/día</option>
+                            <option value="7">7 horas/día</option>
+                            <option value="8">8 horas/día</option>
+                            <option value="9">9 horas/día</option>
+                            <option value="10">10 horas/día</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">📅 Días Laborables</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="workDays" value="1" checked>
+                                <span>Lunes</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="workDays" value="2" checked>
+                                <span>Martes</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="workDays" value="3" checked>
+                                <span>Miércoles</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="workDays" value="4" checked>
+                                <span>Jueves</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="workDays" value="5" checked>
+                                <span>Viernes</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="workDays" value="6">
+                                <span>Sábado</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="workDays" value="0">
+                                <span>Domingo</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="color: var(--success-color); margin-bottom: 15px; font-size: 1.1rem;">
+                        💰 Configuración Salarial
+                    </h3>
+
+                    <div class="form-group">
+                        <label class="form-label">💵 Sueldo Mensual (S/)</label>
+                        <input 
+                            type="number" 
+                            id="empMonthlySalary" 
+                            class="form-input" 
+                            placeholder="Ej: 700"
+                            min="0"
+                            step="0.01"
+                            required
+                            oninput="updateSalaryCalculations()"
+                        >
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">
+                            Sueldo fijo mensual del empleado
+                        </p>
+                    </div>
+
+                    <div class="auto-calc-box">
+                        <div class="auto-calc-title">📊 Cálculos Automáticos</div>
+                        <div class="auto-calc-row">
+                            <span>Sueldo Diario:</span>
+                            <span class="auto-calc-value" id="calcDaily">S/ 0.00</span>
+                        </div>
+                        <div class="auto-calc-row">
+                            <span>Sueldo por Hora:</span>
+                            <span class="auto-calc-value" id="calcHourly">S/ 0.00</span>
+                        </div>
+                        <div class="auto-calc-row">
+                            <span>Costo Hora Extra:</span>
+                            <span class="auto-calc-value" id="calcExtraHour">S/ 0.00</span>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 10px;">
+                            ℹ️ Fórmula: Mensual ÷ 30 días = Diario<br>
+                            Diario ÷ Horas = Por Hora
+                        </p>
+                    </div>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-danger" onclick="closeEmployeeModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        Guardar Empleado
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EMPLOYEE DETAILS MODAL -->
+    <div id="employeeDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="detailsModalTitle">📊 Detalle del Empleado</h2>
+                <button class="modal-close" onclick="closeEmployeeDetailsModal()">×</button>
+            </div>
+
+            <div id="employeeDetailsContent">
+                <!-- Contenido dinámico -->
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-primary" onclick="closeEmployeeDetailsModal()">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🗑️ Eliminar Empleado</h2>
+                <button class="modal-close" onclick="closeDeleteConfirmModal()">×</button>
+            </div>
+
+            <input type="hidden" id="deleteConfirmUsername">
+            
+            <div id="deleteConfirmContent">
+                <!-- Contenido dinámico -->
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-primary" onclick="closeDeleteConfirmModal()">
+                    ❌ Cancelar
+                </button>
+                <button type="button" class="btn btn-danger" onclick="executeDeleteEmployee()">
+                    ✅ Sí, Eliminar Empleado
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPANY INFO MODAL -->
+    <div id="companyInfoModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🏢 Información de la Empresa</h2>
+                <button class="modal-close" onclick="closeCompanyInfoModal()">×</button>
+            </div>
+
+            <div id="companyInfoContent">
+                <!-- Contenido dinámico -->
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-primary" onclick="closeCompanyInfoModal()">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM ALERT MODAL -->
+    <div id="customAlertOverlay" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <div class="custom-alert-icon" id="customAlertIcon">⚠️</div>
+            <h2 class="custom-alert-title" id="customAlertTitle">Título</h2>
+            <div class="custom-alert-message" id="customAlertMessage">Mensaje</div>
+            <div class="custom-alert-buttons" id="customAlertButtons">
+                <!-- Botones dinámicos -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CUSTOM ALERT FUNCTIONS
+        // ============================================
+        let alertCallback = null;
+
+        function showCustomAlert(options) {
+            const overlay = document.getElementById('customAlertOverlay');
+            const icon = document.getElementById('customAlertIcon');
+            const title = document.getElementById('customAlertTitle');
+            const message = document.getElementById('customAlertMessage');
+            const buttons = document.getElementById('customAlertButtons');
+
+            icon.textContent = options.icon || '⚠️';
+            title.textContent = options.title || 'Alerta';
+            title.style.color = options.titleColor || 'var(--text-primary)';
+            message.innerHTML = options.message || '';
+
+            // Crear botones
+            let buttonsHTML = '';
+            if (options.type === 'confirm') {
+                buttonsHTML = `
+                    <button class="btn btn-danger" onclick="closeCustomAlert(false)">
+                        ${options.cancelText || '❌ Cancelar'}
+                    </button>
+                    <button class="btn btn-success" onclick="closeCustomAlert(true)">
+                        ${options.confirmText || '✅ Confirmar'}
+                    </button>
+                `;
+            } else {
+                buttonsHTML = `
+                    <button class="btn btn-primary" onclick="closeCustomAlert(true)" style="width: 100%;">
+                        ${options.confirmText || '✅ Entendido'}
+                    </button>
+                `;
+            }
+            buttons.innerHTML = buttonsHTML;
+
+            alertCallback = options.callback || null;
+            overlay.classList.add('show');
+        }
+
+        function closeCustomAlert(result) {
+            const overlay = document.getElementById('customAlertOverlay');
+            overlay.classList.remove('show');
+            
+            if (alertCallback) {
+                alertCallback(result);
+                alertCallback = null;
+            }
+        }
+
+        // ============================================
+        // CONFIGURACIÓN
+        // ============================================
+        const STORAGE_PREFIX = 'attendance_salary_';
+        const USERS_KEY = 'attendance_salary_users';
+        const COMPANY_KEY = 'attendance_salary_company';
+        const SETUP_COMPLETE_KEY = 'attendance_salary_setup_complete';
+
+        let currentUser = null;
+
+        // ============================================
+        // COMPANY MANAGEMENT
+        // ============================================
+        function getCompanyData() {
+            const companyData = localStorage.getItem(COMPANY_KEY);
+            if (!companyData) {
+                return null;
+            }
+            return JSON.parse(companyData);
+        }
+
+        function saveCompanyData(company) {
+            localStorage.setItem(COMPANY_KEY, JSON.stringify(company));
+        }
+
+        function isSetupComplete() {
+            return localStorage.getItem(SETUP_COMPLETE_KEY) === 'true';
+        }
+
+        function markSetupComplete() {
+            localStorage.setItem(SETUP_COMPLETE_KEY, 'true');
+        }
+
+        // ============================================
+        // ADMIN SETUP
+        // ============================================
+        document.getElementById('adminSetupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            completeAdminSetup();
+        });
+
+        function completeAdminSetup() {
+            const companyName = document.getElementById('companyName').value.trim();
+            const companyRuc = document.getElementById('companyRuc').value.trim();
+            const companyAddress = document.getElementById('companyAddress').value.trim();
+            const companyPhone = document.getElementById('companyPhone').value.trim();
+            const companyEmail = document.getElementById('companyEmail').value.trim();
+            
+            const adminFullName = document.getElementById('adminFullName').value.trim();
+            const adminEmail = document.getElementById('adminEmail').value.trim();
+            const adminUsername = document.getElementById('adminUsername').value.trim().toLowerCase().replace(/\s+/g, '');
+            const adminPassword = document.getElementById('adminPassword').value;
+            const adminPasswordConfirm = document.getElementById('adminPasswordConfirm').value;
+            
+            const errorDiv = document.getElementById('setupError');
+
+            // Validaciones
+            if (!companyName || !companyRuc || !companyAddress || !companyPhone || !companyEmail ||
+                !adminFullName || !adminEmail || !adminUsername || !adminPassword || !adminPasswordConfirm) {
+                errorDiv.textContent = 'Todos los campos son obligatorios';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (adminPassword !== adminPasswordConfirm) {
+                errorDiv.textContent = 'Las contraseñas no coinciden';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (adminPassword.length < 6) {
+                errorDiv.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            // Verificar si el usuario ya existe
+            const existingUsers = getUsers();
+            if (existingUsers[adminUsername]) {
+                errorDiv.textContent = 'El nombre de usuario ya existe. Por favor elige otro.';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            // Guardar o actualizar datos de la empresa (solo si no existe o es primera vez)
+            let companyData = getCompanyData();
+            if (!companyData) {
+                companyData = {
+                    name: companyName,
+                    ruc: companyRuc,
+                    address: companyAddress,
+                    phone: companyPhone,
+                    email: companyEmail,
+                    createdAt: new Date().toISOString()
+                };
+                saveCompanyData(companyData);
+            }
+
+            // Crear nuevo usuario administrador
+            const users = getUsers();
+            users[adminUsername] = {
+                username: adminUsername,
+                password: adminPassword,
+                fullName: adminFullName,
+                email: adminEmail,
+                role: 'admin',
+                active: true,
+                createdAt: new Date().toISOString()
+            };
+
+            // Si es la primera vez y no existe bwayne, agregarlo como demo
+            if (!users['bwayne']) {
+                users['bwayne'] = {
+                    username: 'bwayne',
+                    password: '123',
+                    fullName: 'Bruce Wayne',
+                    email: 'bruce@empresa.com',
+                    role: 'employee',
+                    active: true,
+                    config: {
+                        dailyHours: 5,
+                        workDays: [1, 2, 3, 4, 5],
+                        monthlySalary: 700
+                    },
+                    createdAt: new Date().toISOString()
+                };
+            }
+
+            saveUsers(users);
+            markSetupComplete();
+
+            showNotification('✅ Cuenta de administrador creada exitosamente', 'success');
+            
+            setTimeout(() => {
+                showScreen('loginScreen');
+            }, 1500);
+        }
+
+        function skipSetupAndUseDemo() {
+            if (confirm('¿Deseas usar los datos de demostración?\n\nEsto creará:\n• Empresa: Demo Company\n• Admin: admin / 123\n• Empleado: bwayne / 123')) {
+                // Datos de empresa demo
+                const companyData = {
+                    name: 'Demo Company S.A.C.',
+                    ruc: '20123456789',
+                    address: 'Av. Demo 123, Lima',
+                    phone: '+51 999 888 777',
+                    email: 'contacto@democompany.com',
+                    createdAt: new Date().toISOString()
+                };
+                saveCompanyData(companyData);
+
+                // Usuario admin demo
+                const users = {};
+                users['admin'] = {
+                    username: 'admin',
+                    password: '123',
+                    fullName: 'Administrador Demo',
+                    email: 'admin@democompany.com',
+                    role: 'admin',
+                    active: true,
+                    createdAt: new Date().toISOString()
+                };
+
+                users['bwayne'] = {
+                    username: 'bwayne',
+                    password: '123',
+                    fullName: 'Bruce Wayne',
+                    email: 'bruce@empresa.com',
+                    role: 'employee',
+                    active: true,
+                    config: {
+                        dailyHours: 5,
+                        workDays: [1, 2, 3, 4, 5],
+                        monthlySalary: 700
+                    },
+                    createdAt: new Date().toISOString()
+                };
+
+                saveUsers(users);
+                markSetupComplete();
+
+                showNotification('✅ Datos de demostración configurados', 'success');
+                
+                setTimeout(() => {
+                    showScreen('loginScreen');
+                }, 1500);
+            }
+        }
+
+        function goToSetup() {
+            if (isSetupComplete()) {
+                // Si ya existe configuración, preguntar si desea resetear
+                if (confirm('⚠️ Ya existe una configuración.\n\n¿Deseas crear una nueva cuenta de empresa?\n\nEsto NO eliminará la configuración actual, solo agregará un nuevo administrador.')) {
+                    showScreen('adminSetupScreen');
+                    document.getElementById('adminSetupForm').reset();
+                    document.getElementById('setupError').classList.remove('show');
+                }
+            } else {
+                // Primera vez, ir directo a setup
+                showScreen('adminSetupScreen');
+                document.getElementById('adminSetupForm').reset();
+                document.getElementById('setupError').classList.remove('show');
+            }
+        }
+
+        function loadDemoDataQuick() {
+            // Verificar si ya existen usuarios
+            const users = getUsers();
+            if (Object.keys(users).length > 0) {
+                showNotification('Ya existen usuarios en el sistema. Usa las credenciales existentes o resetea el sistema.', 'error');
+                return;
+            }
+
+            if (confirm('¿Cargar datos de demostración?\n\nSe crearán:\n• Empresa: Demo Company\n• Admin: admin / 123\n• Empleado: bwayne / 123')) {
+                // Datos de empresa demo
+                const companyData = {
+                    name: 'Demo Company S.A.C.',
+                    ruc: '20123456789',
+                    address: 'Av. Demo 123, Lima',
+                    phone: '+51 999 888 777',
+                    email: 'contacto@democompany.com',
+                    createdAt: new Date().toISOString()
+                };
+                saveCompanyData(companyData);
+
+                // Crear usuarios demo
+                const demoUsers = {
+                    'admin': {
+                        username: 'admin',
+                        password: '123',
+                        fullName: 'Administrador Demo',
+                        email: 'admin@democompany.com',
+                        role: 'admin',
+                        active: true,
+                        createdAt: new Date().toISOString()
+                    },
+                    'bwayne': {
+                        username: 'bwayne',
+                        password: '123',
+                        fullName: 'Bruce Wayne',
+                        email: 'bruce@empresa.com',
+                        role: 'employee',
+                        active: true,
+                        config: {
+                            dailyHours: 5,
+                            workDays: [1, 2, 3, 4, 5],
+                            monthlySalary: 700
+                        },
+                        createdAt: new Date().toISOString()
+                    }
+                };
+
+                saveUsers(demoUsers);
+                markSetupComplete();
+
+                showNotification('✅ Datos demo cargados. Usa: admin / 123', 'success');
+                
+                // Auto-llenar el formulario
+                setTimeout(() => {
+                    document.getElementById('loginUsername').value = 'admin';
+                    document.getElementById('loginPassword').value = '123';
+                }, 500);
+            }
+        }
+
+        function resetSystem() {
+            if (confirm('⚠️ ADVERTENCIA\n\n¿Estás seguro de que deseas BORRAR TODA LA CONFIGURACIÓN?\n\nEsto eliminará:\n• Datos de la empresa\n• Todos los usuarios\n• Todos los registros\n\nEsta acción NO se puede deshacer.')) {
+                if (confirm('Confirma nuevamente: ¿REALMENTE deseas borrar todo?')) {
+                    localStorage.removeItem(USERS_KEY);
+                    localStorage.removeItem(COMPANY_KEY);
+                    localStorage.removeItem(SETUP_COMPLETE_KEY);
+                    
+                    showNotification('Sistema reseteado completamente', 'success');
+                    
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                }
+            }
+        }
+
+        // ============================================
+        // USER MANAGEMENT
+        // ============================================
+        function getUsers() {
+            const usersData = localStorage.getItem(USERS_KEY);
+            if (!usersData) {
+                return {};
+            }
+            return JSON.parse(usersData);
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        }
+
+        function getEmployees() {
+            const users = getUsers();
+            return Object.values(users).filter(u => u.role === 'employee' && u.active);
+        }
+
+        function addEmployee(username, fullName, email, password, dailyHours, workDays, monthlySalary) {
+            const users = getUsers();
+            
+            if (users[username]) {
+                return { success: false, message: 'El usuario ya existe' };
+            }
+
+            users[username] = {
+                username,
+                fullName,
+                email,
+                password,
+                role: 'employee',
+                active: true,
+                config: {
+                    dailyHours: parseInt(dailyHours),
+                    workDays: workDays.map(d => parseInt(d)),
+                    monthlySalary: parseFloat(monthlySalary)
+                },
+                createdAt: new Date().toISOString()
+            };
+
+            saveUsers(users);
+            return { success: true, message: 'Empleado agregado exitosamente' };
+        }
+
+        function deleteEmployee(username) {
+            const users = getUsers();
+            
+            if (!users[username]) {
+                return { success: false, message: 'Usuario no encontrado' };
+            }
+
+            if (users[username].role === 'admin') {
+                return { success: false, message: 'No puedes eliminar un administrador' };
+            }
+
+            users[username].active = false;
+            saveUsers(users);
+            return { success: true, message: 'Empleado eliminado exitosamente' };
+        }
+
+        // ============================================
+        // SALARY CALCULATIONS
+        // ============================================
+        function calculateDailySalary(monthlySalary) {
+            return monthlySalary / 30;
+        }
+
+        function calculateHourlySalary(monthlySalary, dailyHours) {
+            const dailySalary = calculateDailySalary(monthlySalary);
+            return dailySalary / dailyHours;
+        }
+
+        function calculateExtraPay(extraHours, hourlySalary) {
+            return extraHours * hourlySalary;
+        }
+
+        function formatMoney(amount) {
+            return 'S/ ' + amount.toFixed(2);
+        }
+
+        function formatHours(hours) {
+            const h = Math.floor(Math.abs(hours));
+            const m = Math.round((Math.abs(hours) - h) * 60);
+            const sign = hours < 0 ? '-' : '';
+            return `${sign}${h}:${m.toString().padStart(2, '0')}`;
+        }
+
+        // ============================================
+        // UTILITIES
+        // ============================================
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function getDayShortName(dayNumber) {
+            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            return days[dayNumber];
+        }
+
+        // ============================================
+        // LOGIN
+        // ============================================
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            login();
+        });
+
+        function fillLogin(username, password) {
+            document.getElementById('loginUsername').value = username;
+            document.getElementById('loginPassword').value = password;
+            document.getElementById('loginError').classList.remove('show');
+            showNotification('✅ Credenciales cargadas. Presiona "Iniciar Sesión"', 'success');
+        }
+
+        function resetAllData() {
+            showCustomAlert({
+                icon: '🗑️',
+                title: '¿Borrar todos los datos?',
+                titleColor: 'var(--danger-color)',
+                message: `
+                    <p style="margin-bottom: 15px;">Esto eliminará <strong>permanentemente</strong>:</p>
+                    <ul>
+                        <li>👥 Todos los usuarios</li>
+                        <li>🏢 Datos de la empresa</li>
+                        <li>📋 Registros de asistencia</li>
+                        <li>⚙️ Toda la configuración</li>
+                    </ul>
+                    <p style="color: var(--danger-color); font-weight: 600; margin-top: 15px;">
+                        ⚠️ Esta acción NO se puede deshacer
+                    </p>
+                `,
+                type: 'confirm',
+                cancelText: '❌ Cancelar',
+                confirmText: '🗑️ Sí, borrar todo',
+                callback: function(confirmed) {
+                    if (confirmed) {
+                        try {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            showCustomAlert({
+                                icon: '✅',
+                                title: '¡Datos eliminados!',
+                                titleColor: 'var(--success-color)',
+                                message: '<p>Todos los datos han sido borrados correctamente.</p><p style="margin-top: 10px;">La página se recargará automáticamente...</p>',
+                                type: 'alert',
+                                confirmText: '🔄 Recargar ahora',
+                                callback: function() {
+                                    location.reload();
+                                }
+                            });
+                            setTimeout(() => location.reload(), 2000);
+                        } catch (error) {
+                            showCustomAlert({
+                                icon: '❌',
+                                title: 'Error',
+                                titleColor: 'var(--danger-color)',
+                                message: '<p>No se pudieron borrar los datos:</p><p style="color: var(--danger-color);">' + error.message + '</p>',
+                                type: 'alert'
+                            });
+                        }
+                    }
+                }
+            });
+        }
+
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!username || !password) {
+                errorDiv.textContent = 'Por favor completa todos los campos';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            const users = getUsers();
+            
+            // Debug: verificar si hay usuarios
+            if (Object.keys(users).length === 0) {
+                errorDiv.textContent = 'No hay usuarios registrados. Por favor crea una cuenta primero.';
+                errorDiv.classList.add('show');
+                console.log('No users found in system');
+                return;
+            }
+
+            const user = users[username];
+
+            if (!user) {
+                errorDiv.textContent = `Usuario "${username}" no encontrado. Verifica el nombre de usuario.`;
+                errorDiv.classList.add('show');
+                console.log('Available users:', Object.keys(users));
+                return;
+            }
+
+            if (user.password !== password) {
+                errorDiv.textContent = 'Contraseña incorrecta';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (!user.active) {
+                errorDiv.textContent = 'Esta cuenta ha sido desactivada';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            // Login exitoso
+            errorDiv.classList.remove('show');
+            currentUser = user;
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            showNotification('¡Bienvenido ' + currentUser.fullName + '!', 'success');
+
+            if (currentUser.role === 'admin') {
+                initAdminDashboard();
+                showScreen('adminScreen');
+            } else {
+                initEmployeeDashboard();
+                showScreen('employeeScreen');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('currentUser');
+            currentUser = null;
+            showScreen('loginScreen');
+            showNotification('Sesión cerrada', 'success');
+        }
+
+        // ============================================
+        // EMPLOYEE DASHBOARD
+        // ============================================
+        let clockInterval = null;
+        let workingInterval = null;
+        let todayAttendance = null;
+        const ATTENDANCE_KEY = 'attendance_salary_attendance';
+
+        function getAttendanceRecords() {
+            const data = localStorage.getItem(ATTENDANCE_KEY);
+            return data ? JSON.parse(data) : {};
+        }
+
+        function saveAttendanceRecords(records) {
+            localStorage.setItem(ATTENDANCE_KEY, JSON.stringify(records));
+        }
+
+        function getTodayKey() {
+            const today = new Date();
+            return `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+        }
+
+        function initEmployeeDashboard() {
+            document.getElementById('empUserName').textContent = currentUser.fullName;
+            
+            const config = currentUser.config;
+            const dailySalary = calculateDailySalary(config.monthlySalary);
+            const hourlySalary = calculateHourlySalary(config.monthlySalary, config.dailyHours);
+
+            // Mostrar configuración salarial
+            document.getElementById('empSalaryMonthly').textContent = formatMoney(config.monthlySalary);
+            document.getElementById('empSalaryDaily').textContent = formatMoney(dailySalary);
+            document.getElementById('empSalaryHourly').textContent = formatMoney(hourlySalary);
+
+            // Inicializar reloj
+            startClock();
+            
+            // Verificar día laboral
+            updateDayType();
+            
+            // Cargar asistencia de hoy
+            loadTodayAttendance();
+            
+            // Actualizar estadísticas
+            updateTodayStats();
+            updateWeekStats();
+            
+            // Inicializar historial
+            initHistoryFilter();
+        }
+
+        function startClock() {
+            updateClock();
+            if (clockInterval) clearInterval(clockInterval);
+            clockInterval = setInterval(updateClock, 1000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString('es-PE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            
+            document.getElementById('currentTime').textContent = timeStr;
+            document.getElementById('currentDate').textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+            
+            // Actualizar tiempo trabajado si está trabajando
+            if (todayAttendance && todayAttendance.entryTime && !todayAttendance.exitTime && !todayAttendance.noWork) {
+                updateWorkedTime();
+            }
+        }
+
+        function updateDayType() {
+            const config = currentUser.config;
+            const today = new Date().getDay();
+            const isWorkDay = config.workDays.includes(today);
+            
+            const badge = document.getElementById('dayTypeBadge');
+            if (isWorkDay) {
+                badge.className = 'day-type-badge work-day';
+                badge.innerHTML = '📅 Día Laboral';
+            } else {
+                badge.className = 'day-type-badge rest-day';
+                badge.innerHTML = '🏖️ Día de Descanso';
+            }
+        }
+
+        function loadTodayAttendance() {
+            const records = getAttendanceRecords();
+            const todayKey = getTodayKey();
+            const userKey = `${currentUser.username}_${todayKey}`;
+            
+            todayAttendance = records[userKey] || null;
+            updateAttendanceUI();
+        }
+
+        function updateAttendanceUI() {
+            const btnEntry = document.getElementById('btnEntry');
+            const btnExit = document.getElementById('btnExit');
+            const btnNoWork = document.getElementById('btnNoWork');
+            const entryDisplay = document.getElementById('entryTimeDisplay');
+            const exitDisplay = document.getElementById('exitTimeDisplay');
+            const statusIndicator = document.getElementById('workStatus');
+            const noWorkContainer = document.getElementById('noWorkReasonContainer');
+            
+            // Ocultar formulario de ausencia
+            noWorkContainer.style.display = 'none';
+            
+            if (!todayAttendance) {
+                // Sin registro hoy
+                btnEntry.disabled = false;
+                btnExit.disabled = true;
+                btnNoWork.disabled = false;
+                entryDisplay.textContent = '--:--';
+                entryDisplay.classList.add('pending');
+                exitDisplay.textContent = '--:--';
+                exitDisplay.classList.add('pending');
+                statusIndicator.className = 'status-indicator not-started';
+                statusIndicator.innerHTML = '⏳ Sin iniciar';
+                document.getElementById('workedTimeDisplay').textContent = '0:00:00';
+            } else if (todayAttendance.noWork) {
+                // Marcado como no trabajo
+                btnEntry.disabled = true;
+                btnExit.disabled = true;
+                btnNoWork.disabled = true;
+                entryDisplay.textContent = '🚫';
+                entryDisplay.classList.add('pending');
+                exitDisplay.textContent = '🚫';
+                exitDisplay.classList.add('pending');
+                
+                // Mostrar estado con información de descuento
+                if (todayAttendance.shouldDiscount) {
+                    statusIndicator.className = 'status-indicator no-work';
+                    statusIndicator.innerHTML = `🚫 ${todayAttendance.noWorkType} <br><small style="font-size: 0.75rem; opacity: 0.8;">💸 Con descuento</small>`;
+                } else {
+                    statusIndicator.className = 'status-indicator finished';
+                    statusIndicator.innerHTML = `✅ ${todayAttendance.noWorkType} <br><small style="font-size: 0.75rem; opacity: 0.8;">💰 Sin descuento</small>`;
+                }
+                document.getElementById('workedTimeDisplay').textContent = '0:00:00';
+            } else if (todayAttendance.entryTime && !todayAttendance.exitTime) {
+                // Trabajando
+                btnEntry.disabled = true;
+                btnExit.disabled = false;
+                btnNoWork.disabled = true;
+                entryDisplay.textContent = todayAttendance.entryTime;
+                entryDisplay.classList.remove('pending');
+                exitDisplay.textContent = '--:--';
+                exitDisplay.classList.add('pending');
+                statusIndicator.className = 'status-indicator working';
+                statusIndicator.innerHTML = '🟢 Trabajando...';
+                updateWorkedTime();
+            } else if (todayAttendance.entryTime && todayAttendance.exitTime) {
+                // Jornada completada
+                btnEntry.disabled = true;
+                btnExit.disabled = true;
+                btnNoWork.disabled = true;
+                entryDisplay.textContent = todayAttendance.entryTime;
+                entryDisplay.classList.remove('pending');
+                exitDisplay.textContent = todayAttendance.exitTime;
+                exitDisplay.classList.remove('pending');
+                statusIndicator.className = 'status-indicator finished';
+                statusIndicator.innerHTML = '✅ Jornada Completada';
+                updateWorkedTime();
+            }
+        }
+
+        function updateWorkedTime() {
+            if (!todayAttendance || !todayAttendance.entryTime) return;
+            
+            const [entryH, entryM] = todayAttendance.entryTime.split(':').map(Number);
+            const entryDate = new Date();
+            entryDate.setHours(entryH, entryM, 0, 0);
+            
+            let endDate;
+            if (todayAttendance.exitTime) {
+                const [exitH, exitM] = todayAttendance.exitTime.split(':').map(Number);
+                endDate = new Date();
+                endDate.setHours(exitH, exitM, 0, 0);
+            } else {
+                endDate = new Date();
+            }
+            
+            const diffMs = endDate - entryDate;
+            const diffSecs = Math.floor(diffMs / 1000);
+            const hours = Math.floor(diffSecs / 3600);
+            const mins = Math.floor((diffSecs % 3600) / 60);
+            const secs = diffSecs % 60;
+            
+            document.getElementById('workedTimeDisplay').textContent = 
+                `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function markEntry() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+            
+            const records = getAttendanceRecords();
+            const todayKey = getTodayKey();
+            const userKey = `${currentUser.username}_${todayKey}`;
+            
+            todayAttendance = {
+                username: currentUser.username,
+                date: todayKey,
+                entryTime: timeStr,
+                exitTime: null,
+                noWork: false
+            };
+            
+            records[userKey] = todayAttendance;
+            saveAttendanceRecords(records);
+            
+            updateAttendanceUI();
+            updateTodayStats();
+            showNotification('✅ Entrada registrada: ' + timeStr, 'success');
+        }
+
+        function markExit() {
+            if (!todayAttendance || !todayAttendance.entryTime) {
+                showNotification('❌ Primero debes marcar entrada', 'error');
+                return;
+            }
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+            
+            const records = getAttendanceRecords();
+            const todayKey = getTodayKey();
+            const userKey = `${currentUser.username}_${todayKey}`;
+            
+            todayAttendance.exitTime = timeStr;
+            records[userKey] = todayAttendance;
+            saveAttendanceRecords(records);
+            
+            updateAttendanceUI();
+            updateTodayStats();
+            showNotification('✅ Salida registrada: ' + timeStr, 'success');
+        }
+
+        function markNoWork() {
+            console.log('markNoWork llamado');
+            console.log('currentUser:', currentUser);
+            
+            // Verificar si el usuario tiene configuración (solo empleados)
+            if (!currentUser || !currentUser.config) {
+                showCustomAlert({
+                    icon: '❌',
+                    title: 'No disponible',
+                    titleColor: 'var(--danger-color)',
+                    message: `
+                        <p>Esta función solo está disponible para <strong>empleados</strong>.</p>
+                        <p style="margin-top: 15px;">Inicia sesión con una cuenta de empleado:</p>
+                        <ul>
+                            <li><code>bwayne</code> / <code>123</code></li>
+                            <li><code>ckent</code> / <code>123</code></li>
+                        </ul>
+                    `,
+                    type: 'alert'
+                });
+                return;
+            }
+            
+            // Verificar si es día laboral
+            const config = currentUser.config;
+            const today = new Date().getDay();
+            const isWorkDay = config.workDays.includes(today);
+            const dayName = getDayFullName(today);
+            
+            console.log('Es día laboral:', isWorkDay, 'Día:', today);
+            
+            let messageHTML = `
+                <div style="text-align: left;">
+                    <p style="margin-bottom: 15px; font-weight: 600;">📌 Esta opción SOLO debe marcarse en caso de:</p>
+                    <ul style="margin-bottom: 20px;">
+                        <li>✅ PERMISO aprobado por el jefe</li>
+                        <li>✅ FERIADO oficial</li>
+                        <li>✅ DÍA DE DESCANSO programado</li>
+                        <li>✅ Ausencia JUSTIFICADA</li>
+                    </ul>
+            `;
+            
+            if (isWorkDay) {
+                messageHTML += `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                        <p style="color: var(--danger-color); font-weight: 700; margin-bottom: 8px;">
+                            ⚠️ HOY ES DÍA LABORABLE (${dayName})
+                        </p>
+                        <p style="color: var(--text-secondary);">
+                            Si marcas "No Trabajo" sin justificación válida, <strong style="color: var(--danger-color);">SE DESCONTARÁ</strong> el día de tu sueldo.
+                        </p>
+                    </div>
+                `;
+            } else {
+                messageHTML += `
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                        <p style="color: var(--success-color); font-weight: 700; margin-bottom: 8px;">
+                            🏖️ HOY ES DÍA DE DESCANSO (${dayName})
+                        </p>
+                        <p style="color: var(--text-secondary);">
+                            No se descontará de tu sueldo.
+                        </p>
+                    </div>
+                `;
+            }
+            
+            messageHTML += `
+                    <div style="background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.3); padding: 15px; border-radius: 10px;">
+                        <p style="color: var(--primary-color); font-weight: 600; margin-bottom: 8px;">💡 RECUERDA:</p>
+                        <p style="color: var(--text-secondary);">
+                            Si NO marcas nada en un día laborable, el sistema asumirá que NO trabajaste y se descontará automáticamente.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            showCustomAlert({
+                icon: '🚫',
+                title: '¿Marcar como No Trabajo?',
+                titleColor: isWorkDay ? 'var(--warning-color)' : 'var(--primary-color)',
+                message: messageHTML,
+                type: 'confirm',
+                cancelText: '❌ Cancelar',
+                confirmText: '✅ Sí, registrar ausencia',
+                callback: function(confirmed) {
+                    if (confirmed) {
+                        // Mostrar formulario para razón
+                        document.getElementById('noWorkReasonContainer').style.display = 'block';
+                        document.getElementById('noWorkType').value = '';
+                        document.getElementById('noWorkDetail').value = '';
+                        
+                        // Actualizar opciones del select según el tipo de día
+                        updateNoWorkOptions(isWorkDay);
+                        
+                        // Scroll al formulario
+                        setTimeout(() => {
+                            document.getElementById('noWorkReasonContainer').scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
+                    }
+                }
+            });
+        }
+
+        function getDayFullName(dayNumber) {
+            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            return days[dayNumber];
+        }
+
+        function updateNoWorkOptions(isWorkDay) {
+            const select = document.getElementById('noWorkType');
+            let options = '<option value="">-- Selecciona una opción --</option>';
+            
+            if (isWorkDay) {
+                options += '<option value="permiso">📋 Permiso Personal (Con descuento)</option>';
+                options += '<option value="permiso_pagado">📋 Permiso Pagado (Sin descuento)</option>';
+                options += '<option value="medico">🏥 Cita Médica / Enfermedad</option>';
+                options += '<option value="familiar">👨‍👩‍👧 Emergencia Familiar</option>';
+                options += '<option value="vacaciones">🏖️ Día de Vacaciones (Sin descuento)</option>';
+                options += '<option value="feriado">🎉 Feriado Oficial (Sin descuento)</option>';
+                options += '<option value="otro">📝 Otro (especificar)</option>';
+            } else {
+                options += '<option value="feriado">🎉 Feriado Oficial</option>';
+                options += '<option value="descanso">🏖️ Día de Descanso</option>';
+                options += '<option value="otro">📝 Otro (especificar)</option>';
+            }
+            
+            select.innerHTML = options;
+        }
+
+        function confirmNoWork() {
+            const noWorkType = document.getElementById('noWorkType').value;
+            const noWorkDetail = document.getElementById('noWorkDetail').value.trim();
+            
+            if (!noWorkType) {
+                showNotification('❌ Selecciona el tipo de ausencia', 'error');
+                return;
+            }
+            
+            if (!noWorkDetail) {
+                showNotification('❌ Describe la razón de tu ausencia', 'error');
+                return;
+            }
+            
+            // Determinar si se descuenta o no
+            const config = currentUser.config;
+            const today = new Date().getDay();
+            const isWorkDay = config.workDays.includes(today);
+            
+            // Tipos que NO generan descuento
+            const noDiscountTypes = ['permiso_pagado', 'vacaciones', 'feriado', 'descanso'];
+            const shouldDiscount = isWorkDay && !noDiscountTypes.includes(noWorkType);
+            
+            const typeLabels = {
+                'permiso': 'Permiso Personal',
+                'permiso_pagado': 'Permiso Pagado',
+                'medico': 'Cita Médica / Enfermedad',
+                'familiar': 'Emergencia Familiar',
+                'vacaciones': 'Día de Vacaciones',
+                'feriado': 'Feriado Oficial',
+                'descanso': 'Día de Descanso',
+                'otro': 'Otro'
+            };
+            
+            const records = getAttendanceRecords();
+            const todayKey = getTodayKey();
+            const userKey = `${currentUser.username}_${todayKey}`;
+            
+            todayAttendance = {
+                username: currentUser.username,
+                date: todayKey,
+                entryTime: null,
+                exitTime: null,
+                noWork: true,
+                noWorkType: typeLabels[noWorkType],
+                noWorkTypeKey: noWorkType,
+                noWorkDetail: noWorkDetail,
+                noWorkTimestamp: new Date().toISOString(),
+                isWorkDay: isWorkDay,
+                shouldDiscount: shouldDiscount
+            };
+            
+            records[userKey] = todayAttendance;
+            saveAttendanceRecords(records);
+            
+            document.getElementById('noWorkReasonContainer').style.display = 'none';
+            updateAttendanceUI();
+            updateTodayStats();
+            
+            let message = '✅ Ausencia registrada: ' + typeLabels[noWorkType];
+            if (shouldDiscount) {
+                message += ' (Se descontará del sueldo)';
+                showNotification(message, 'error');
+            } else {
+                message += ' (Sin descuento)';
+                showNotification(message, 'success');
+            }
+        }
+
+        function cancelNoWork() {
+            document.getElementById('noWorkReasonContainer').style.display = 'none';
+            document.getElementById('noWorkType').value = '';
+            document.getElementById('noWorkDetail').value = '';
+        }
+
+        function updateTodayStats() {
+            const config = currentUser.config;
+            const dailySalary = calculateDailySalary(config.monthlySalary);
+            const hourlySalary = calculateHourlySalary(config.monthlySalary, config.dailyHours);
+            
+            let todayHours = 0;
+            let todayBasePay = dailySalary;
+            
+            // Verificar si es día laboral
+            const today = new Date().getDay();
+            const isWorkDay = config.workDays.includes(today);
+            
+            if (todayAttendance) {
+                if (todayAttendance.noWork) {
+                    // Si marcó "No Trabajo"
+                    if (todayAttendance.shouldDiscount) {
+                        // Se descuenta el día
+                        todayBasePay = 0;
+                    } else {
+                        // No se descuenta (feriado, vacaciones, día de descanso, permiso pagado)
+                        todayBasePay = dailySalary;
+                    }
+                } else if (todayAttendance.entryTime) {
+                    // Si tiene entrada registrada
+                    const [entryH, entryM] = todayAttendance.entryTime.split(':').map(Number);
+                    const entryDate = new Date();
+                    entryDate.setHours(entryH, entryM, 0, 0);
+                    
+                    let endDate;
+                    if (todayAttendance.exitTime) {
+                        const [exitH, exitM] = todayAttendance.exitTime.split(':').map(Number);
+                        endDate = new Date();
+                        endDate.setHours(exitH, exitM, 0, 0);
+                    } else {
+                        endDate = new Date();
+                    }
+                    
+                    todayHours = (endDate - entryDate) / (1000 * 60 * 60);
+                    todayBasePay = dailySalary;
+                }
+            } else {
+                // No hay registro hoy
+                if (!isWorkDay) {
+                    // Es día de descanso, no se paga ni se descuenta
+                    todayBasePay = 0; // Mostrar 0 porque no es día laboral
+                } else {
+                    // Es día laboral sin registro - se mostrará lo que ganaría
+                    todayBasePay = dailySalary;
+                }
+            }
+            
+            const todayExtra = Math.max(0, todayHours - config.dailyHours);
+            const todayExtraPay = calculateExtraPay(todayExtra, hourlySalary);
+            const todayTotalPay = todayBasePay + todayExtraPay;
+
+            document.getElementById('empTodayHours').textContent = formatHours(todayHours);
+            document.getElementById('empTodayExtra').textContent = '+' + formatHours(todayExtra);
+            document.getElementById('empTodayBasePay').textContent = formatMoney(todayBasePay);
+            document.getElementById('empTodayExtraPay').textContent = formatMoney(todayExtraPay);
+            document.getElementById('empTodayTotalPay').textContent = formatMoney(todayTotalPay);
+            
+            // Mostrar indicador de descuento si aplica
+            const basPayElement = document.getElementById('empTodayBasePay');
+            if (todayAttendance && todayAttendance.noWork && todayAttendance.shouldDiscount) {
+                basPayElement.style.color = 'var(--danger-color)';
+                basPayElement.textContent = formatMoney(0) + ' ⚠️';
+            } else {
+                basPayElement.style.color = 'var(--success-color)';
+            }
+        }
+
+        function updateWeekStats() {
+            const config = currentUser.config;
+            const dailySalary = calculateDailySalary(config.monthlySalary);
+            const hourlySalary = calculateHourlySalary(config.monthlySalary, config.dailyHours);
+            
+            // Obtener registros de esta semana
+            const records = getAttendanceRecords();
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay() + 1); // Lunes
+            
+            let weekDays = 0;
+            let weekHours = 0;
+            let weekDiscounts = 0;
+            
+            for (let i = 0; i < 7; i++) {
+                const checkDate = new Date(startOfWeek);
+                checkDate.setDate(startOfWeek.getDate() + i);
+                const dayOfWeek = checkDate.getDay();
+                const isWorkDay = config.workDays.includes(dayOfWeek);
+                const dateKey = `${checkDate.getFullYear()}-${(checkDate.getMonth() + 1).toString().padStart(2, '0')}-${checkDate.getDate().toString().padStart(2, '0')}`;
+                const userKey = `${currentUser.username}_${dateKey}`;
+                
+                const record = records[userKey];
+                
+                if (record) {
+                    if (record.noWork) {
+                        // Registro de no trabajo
+                        if (record.shouldDiscount) {
+                            weekDiscounts++;
+                        }
+                    } else if (record.entryTime) {
+                        // Trabajó
+                        weekDays++;
+                        if (record.exitTime) {
+                            const [entryH, entryM] = record.entryTime.split(':').map(Number);
+                            const [exitH, exitM] = record.exitTime.split(':').map(Number);
+                            const hours = (exitH + exitM/60) - (entryH + entryM/60);
+                            weekHours += Math.max(0, hours);
+                        }
+                    }
+                } else if (isWorkDay && checkDate < today) {
+                    // Día laboral pasado sin registro = descuento
+                    weekDiscounts++;
+                }
+            }
+            
+            const weekExtra = Math.max(0, weekHours - (config.dailyHours * weekDays));
+            const weekExtraPay = calculateExtraPay(weekExtra, hourlySalary);
+            const weekDiscountAmount = weekDiscounts * dailySalary;
+
+            document.getElementById('empWeekDays').textContent = weekDays;
+            document.getElementById('empWeekHours').textContent = formatHours(weekHours);
+            document.getElementById('empWeekExtra').textContent = '+' + formatHours(weekExtra);
+            document.getElementById('empWeekExtraPay').textContent = formatMoney(weekExtraPay);
+            document.getElementById('empWeekTotalExtraPay').textContent = formatMoney(weekExtraPay);
+        }
+
+        // ============================================
+        // HISTORIAL DE ASISTENCIA
+        // ============================================
+        function initHistoryFilter() {
+            const select = document.getElementById('historyMonthFilter');
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            
+            const today = new Date();
+            let options = '';
+            
+            // Generar últimos 12 meses
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const value = `${year}-${month}`;
+                const label = `${months[month]} ${year}`;
+                const selected = i === 0 ? 'selected' : '';
+                
+                options += `<option value="${value}" ${selected}>${label}</option>`;
+            }
+            
+            select.innerHTML = options;
+            loadAttendanceHistory();
+        }
+
+        function loadAttendanceHistory() {
+            const select = document.getElementById('historyMonthFilter');
+            const [year, month] = select.value.split('-').map(Number);
+            
+            const config = currentUser.config;
+            const records = getAttendanceRecords();
+            const dailySalary = calculateDailySalary(config.monthlySalary);
+            const hourlySalary = calculateHourlySalary(config.monthlySalary, config.dailyHours);
+            
+            // Obtener días del mes
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            
+            let tableHTML = '';
+            let daysWorked = 0;
+            let daysAbsent = 0;
+            let totalHours = 0;
+            let extraHours = 0;
+            let deductions = 0;
+            
+            const today = new Date();
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dayOfWeek = date.getDay();
+                const isWorkDay = config.workDays.includes(dayOfWeek);
+                const dateKey = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                const userKey = `${currentUser.username}_${dateKey}`;
+                const record = records[userKey];
+                
+                // Solo mostrar días hasta hoy
+                const isFuture = date > today;
+                
+                let entry = '-';
+                let exit = '-';
+                let hours = 0;
+                let extra = 0;
+                let status = '';
+                let badgeClass = '';
+                let statusText = '';
+                
+                if (isFuture) {
+                    status = 'future';
+                    badgeClass = 'badge-rest';
+                    statusText = '📅 Pendiente';
+                } else if (!isWorkDay) {
+                    status = 'rest';
+                    badgeClass = 'badge-rest';
+                    statusText = '🏖️ Descanso';
+                } else if (record) {
+                    if (record.noWork) {
+                        status = 'no_work';
+                        badgeClass = record.shouldDiscount ? 'badge-no-work' : 'badge-complete';
+                        statusText = record.shouldDiscount ? '🚫 ' + (record.noWorkType || 'No trabajó') : '✅ ' + (record.noWorkType || 'Justificado');
+                        if (record.shouldDiscount) {
+                            daysAbsent++;
+                            deductions += dailySalary;
+                        }
+                    } else if (record.entryTime) {
+                        entry = record.entryTime;
+                        exit = record.exitTime || '-';
+                        
+                        if (record.exitTime) {
+                            const [entryH, entryM] = record.entryTime.split(':').map(Number);
+                            const [exitH, exitM] = record.exitTime.split(':').map(Number);
+                            hours = (exitH + exitM/60) - (entryH + entryM/60);
+                            extra = Math.max(0, hours - config.dailyHours);
+                            totalHours += hours;
+                            extraHours += extra;
+                        }
+                        
+                        daysWorked++;
+                        status = hours >= config.dailyHours ? 'complete' : 'incomplete';
+                        badgeClass = hours >= config.dailyHours ? 'badge-complete' : 'badge-incomplete';
+                        statusText = hours >= config.dailyHours ? '✅ Completo' : '⚠️ Incompleto';
+                    }
+                } else if (isWorkDay && !isFuture) {
+                    // Día laboral sin registro (pasado)
+                    status = 'absent';
+                    badgeClass = 'badge-no-work';
+                    statusText = '❌ Sin registro';
+                    daysAbsent++;
+                    deductions += dailySalary;
+                }
+                
+                const dateFormatted = `${day.toString().padStart(2, '0')}/${(month + 1).toString().padStart(2, '0')}/${year}`;
+                
+                tableHTML += `
+                    <tr style="${isFuture ? 'opacity: 0.5;' : ''}">
+                        <td>${dateFormatted}</td>
+                        <td>${dayNames[dayOfWeek]}</td>
+                        <td>${entry}</td>
+                        <td>${exit}</td>
+                        <td><strong>${hours > 0 ? formatHours(hours) : '-'}</strong></td>
+                        <td style="color: ${extra > 0 ? 'var(--success-color)' : 'var(--text-muted)'};">
+                            ${extra > 0 ? '+' + formatHours(extra) : '-'}
+                        </td>
+                        <td><span class="badge ${badgeClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('historyTableBody').innerHTML = tableHTML;
+            
+            // Actualizar resumen
+            document.getElementById('historyDaysWorked').textContent = daysWorked;
+            document.getElementById('historyDaysAbsent').textContent = daysAbsent;
+            document.getElementById('historyTotalHours').textContent = formatHours(totalHours);
+            document.getElementById('historyExtraHours').textContent = '+' + formatHours(extraHours);
+            
+            // Calcular pagos
+            const extraPay = calculateExtraPay(extraHours, hourlySalary);
+            const baseSalary = config.monthlySalary;
+            const totalPay = baseSalary - deductions + extraPay;
+            
+            document.getElementById('historyBaseSalary').textContent = formatMoney(baseSalary);
+            document.getElementById('historyDeductions').textContent = '- ' + formatMoney(deductions);
+            document.getElementById('historyExtraPay').textContent = '+ ' + formatMoney(extraPay);
+            document.getElementById('historyTotalPay').textContent = formatMoney(totalPay);
+            
+            // Colorear el total según sea positivo o haya descuentos
+            const totalElement = document.getElementById('historyTotalPay');
+            if (deductions > 0) {
+                totalElement.style.color = 'var(--warning-color)';
+            } else {
+                totalElement.style.color = 'var(--success-color)';
+            }
+        }
+
+        // ============================================
+        // ADMIN DASHBOARD
+        // ============================================
+        function initAdminDashboard() {
+            document.getElementById('adminUserName').textContent = currentUser.fullName;
+            loadEmployeesTable();
+        }
+
+        function loadEmployeesTable() {
+            const employees = getEmployees();
+            const tbody = document.getElementById('employeesTableBody');
+
+            if (employees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">No hay empleados registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = employees.map(emp => {
+                const workDaysStr = emp.config.workDays.map(d => getDayShortName(d)).join(', ');
+                const hourlySalary = calculateHourlySalary(emp.config.monthlySalary, emp.config.dailyHours);
+                
+                return `
+                    <tr>
+                        <td><code>${emp.username}</code></td>
+                        <td>${emp.fullName}</td>
+                        <td><span class="badge badge-complete">${emp.config.dailyHours}h</span></td>
+                        <td style="font-size: 0.85rem;">${workDaysStr}</td>
+                        <td><strong>${formatMoney(emp.config.monthlySalary)}</strong></td>
+                        <td><strong>${formatMoney(hourlySalary)}</strong></td>
+                        <td>
+                            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.9rem; margin-right: 5px;" onclick="showEmployeeDetails('${emp.username}')">
+                                📊 Ver Detalle
+                            </button>
+                            <button class="btn-danger" onclick="confirmDeleteEmployee('${emp.username}')">
+                                🗑️
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function confirmDeleteEmployee(username) {
+            const users = getUsers();
+            const employee = users[username];
+            
+            if (!employee) {
+                showNotification('Empleado no encontrado', 'error');
+                return;
+            }
+
+            // Mostrar modal de confirmación
+            showDeleteConfirmationModal(employee);
+        }
+
+        function showDeleteConfirmationModal(employee) {
+            const modal = document.getElementById('deleteConfirmModal');
+            const content = document.getElementById('deleteConfirmContent');
+            
+            content.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 4rem; margin-bottom: 15px;">⚠️</div>
+                    <h3 style="color: var(--danger-color); margin-bottom: 15px; font-size: 1.5rem;">
+                        ¡ADVERTENCIA!
+                    </h3>
+                </div>
+
+                <div style="background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h4 style="color: var(--danger-color); margin-bottom: 15px; font-size: 1.1rem;">
+                        Estás a punto de eliminar al empleado:
+                    </h4>
+                    <div style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 8px;">
+                            👤 ${employee.fullName}
+                        </p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                            Usuario: <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">${employee.username}</code>
+                        </p>
+                    </div>
+
+                    <div style="color: var(--text-secondary); line-height: 1.6; margin-top: 15px;">
+                        <p style="margin-bottom: 10px; font-weight: 600; color: var(--text-primary);">
+                            ⚠️ Esta acción debe realizarse ÚNICAMENTE en caso de:
+                        </p>
+                        <ul style="margin-left: 25px; margin-bottom: 15px;">
+                            <li style="margin-bottom: 8px;">✖️ <strong>Despido</strong> del empleado</li>
+                            <li style="margin-bottom: 8px;">✖️ <strong>Renuncia</strong> definitiva</li>
+                            <li style="margin-bottom: 8px;">✖️ <strong>Finalización</strong> de contrato</li>
+                        </ul>
+
+                        <p style="color: var(--warning-color); font-weight: 600; margin-top: 15px; padding: 12px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; border-left: 4px solid var(--warning-color);">
+                            ⚡ NO eliminar por vacaciones, permisos temporales o ausencias breves
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">
+                        <strong style="color: var(--text-primary);">📋 Nota:</strong> Al eliminar un empleado, se perderá el acceso a su cuenta pero sus registros históricos se mantendrán para fines de auditoría.
+                    </p>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="color: var(--danger-color); font-weight: 700; font-size: 1.1rem;">
+                        ¿Confirmas que deseas eliminar este empleado?
+                    </p>
+                </div>
+            `;
+
+            document.getElementById('deleteConfirmUsername').value = employee.username;
+            modal.classList.add('show');
+        }
+
+        function closeDeleteConfirmModal() {
+            document.getElementById('deleteConfirmModal').classList.remove('show');
+        }
+
+        function executeDeleteEmployee() {
+            const username = document.getElementById('deleteConfirmUsername').value;
+            const result = deleteEmployee(username);
+            
+            closeDeleteConfirmModal();
+            
+            if (result.success) {
+                showNotification('✅ ' + result.message, 'success');
+                loadEmployeesTable();
+            } else {
+                showNotification('❌ ' + result.message, 'error');
+            }
+        }
+
+        // ============================================
+        // COMPANY INFO MODAL
+        // ============================================
+        function showCompanyInfoModal() {
+            const company = getCompanyData();
+            
+            if (!company) {
+                showNotification('No hay datos de empresa configurados', 'error');
+                return;
+            }
+
+            const content = `
+                <div style="background: rgba(37, 99, 235, 0.1); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px;">
+                        📋 Información General
+                    </h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                            Nombre de la Empresa
+                        </p>
+                        <p style="color: var(--text-primary); font-weight: 600; font-size: 1.1rem;">
+                            ${company.name}
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                            RUC / ID Fiscal
+                        </p>
+                        <p style="color: var(--text-primary); font-weight: 600;">
+                            ${company.ruc}
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                            Dirección
+                        </p>
+                        <p style="color: var(--text-primary); font-weight: 600;">
+                            ${company.address}
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                            Teléfono
+                        </p>
+                        <p style="color: var(--text-primary); font-weight: 600;">
+                            ${company.phone}
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 0;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                            Email
+                        </p>
+                        <p style="color: var(--text-primary); font-weight: 600;">
+                            ${company.email}
+                        </p>
+                    </div>
+                </div>
+
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 12px;">
+                    <h3 style="color: var(--success-color); margin-bottom: 15px;">
+                        👤 Administrador
+                    </h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                            Nombre Completo
+                        </p>
+                        <p style="color: var(--text-primary); font-weight: 600;">
+                            ${currentUser.fullName}
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                            Email
+                        </p>
+                        <p style="color: var(--text-primary); font-weight: 600;">
+                            ${currentUser.email}
+                        </p>
+                    </div>
+
+                    <div style="margin-bottom: 0;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">
+                            Usuario
+                        </p>
+                        <p style="color: var(--text-primary); font-weight: 600;">
+                            <code style="background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px;">${currentUser.username}</code>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="info-panel" style="margin-top: 20px;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">
+                        ℹ️ Para modificar estos datos, contacta al administrador del sistema o edita manualmente el archivo de configuración.
+                    </p>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--card-border);">
+                    <button type="button" class="btn btn-danger" style="width: 100%;" onclick="resetSystem()">
+                        🔄 Resetear Sistema Completo
+                    </button>
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 10px;">
+                        ⚠️ Esta acción eliminará TODA la configuración
+                    </p>
+                </div>
+            `;
+
+            document.getElementById('companyInfoContent').innerHTML = content;
+            document.getElementById('companyInfoModal').classList.add('show');
+        }
+
+        function closeCompanyInfoModal() {
+            document.getElementById('companyInfoModal').classList.remove('show');
+        }
+
+        // ============================================
+        // EMPLOYEE MODAL
+        // ============================================
+        function showAddEmployeeModal() {
+            document.getElementById('employeeForm').reset();
+            document.getElementById('modalError').classList.remove('show');
+            
+            // Marcar días por defecto (Lun-Vie)
+            document.querySelectorAll('input[name="workDays"]').forEach(cb => {
+                cb.checked = ['1', '2', '3', '4', '5'].includes(cb.value);
+            });
+            
+            updateSalaryCalculations();
+            document.getElementById('employeeModal').classList.add('show');
+        }
+
+        function closeEmployeeModal() {
+            document.getElementById('employeeModal').classList.remove('show');
+        }
+
+        function updateSalaryCalculations() {
+            const monthlySalary = parseFloat(document.getElementById('empMonthlySalary').value) || 0;
+            const dailyHours = parseInt(document.getElementById('empDailyHours').value) || 5;
+
+            const dailySalary = calculateDailySalary(monthlySalary);
+            const hourlySalary = calculateHourlySalary(monthlySalary, dailyHours);
+
+            document.getElementById('calcDaily').textContent = formatMoney(dailySalary);
+            document.getElementById('calcHourly').textContent = formatMoney(hourlySalary);
+            document.getElementById('calcExtraHour').textContent = formatMoney(hourlySalary);
+        }
+
+        document.getElementById('employeeForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveEmployee();
+        });
+
+        function saveEmployee() {
+            const username = document.getElementById('empUsername').value.trim().toLowerCase().replace(/\s+/g, '');
+            const fullName = document.getElementById('empFullName').value.trim();
+            const email = document.getElementById('empEmail').value.trim();
+            const password = document.getElementById('empPassword').value;
+            const dailyHours = document.getElementById('empDailyHours').value;
+            const monthlySalary = document.getElementById('empMonthlySalary').value;
+            const errorDiv = document.getElementById('modalError');
+
+            const workDays = Array.from(document.querySelectorAll('input[name="workDays"]:checked'))
+                .map(cb => cb.value);
+
+            if (!username || !fullName || !email || !password || !monthlySalary) {
+                errorDiv.textContent = 'Todos los campos son obligatorios';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            if (workDays.length === 0) {
+                errorDiv.textContent = 'Debes seleccionar al menos un día laborable';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            const result = addEmployee(username, fullName, email, password, dailyHours, workDays, monthlySalary);
+
+            if (result.success) {
+                showNotification(result.message, 'success');
+                closeEmployeeModal();
+                loadEmployeesTable();
+            } else {
+                errorDiv.textContent = result.message;
+                errorDiv.classList.add('show');
+            }
+        }
+
+        // ============================================
+        // EMPLOYEE DETAILS MODAL
+        // ============================================
+        function showEmployeeDetails(username) {
+            const users = getUsers();
+            const employee = users[username];
+            
+            if (!employee) {
+                showNotification('Empleado no encontrado', 'error');
+                return;
+            }
+
+            const config = employee.config;
+            const dailySalary = calculateDailySalary(config.monthlySalary);
+            const hourlySalary = calculateHourlySalary(config.monthlySalary, config.dailyHours);
+
+            // Mes actual por defecto
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+
+            displayEmployeeDetailsForMonth(employee, currentYear, currentMonth);
+        }
+
+        function displayEmployeeDetailsForMonth(employee, year, month) {
+            const config = employee.config;
+            const dailySalary = calculateDailySalary(config.monthlySalary);
+            const hourlySalary = calculateHourlySalary(config.monthlySalary, config.dailyHours);
+
+            // Generar datos del mes seleccionado
+            const mockData = generateMockEmployeeDataForMonth(employee, year, month);
+
+            // Generar opciones de meses (últimos 12 meses)
+            const monthOptions = generateMonthOptions(year, month);
+
+            const content = `
+                <div class="card" style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
+                        <h3 style="color: var(--primary-color); margin: 0;">👤 ${employee.fullName}</h3>
+                        
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <button class="btn btn-primary" style="padding: 10px 16px; font-size: 0.9rem;" onclick="navigateMonth('${employee.username}', ${year}, ${month}, -1)">
+                                ← Mes Anterior
+                            </button>
+                            <select id="monthSelector" class="form-input" style="width: 200px; padding: 10px;" onchange="changeEmployeeMonth('${employee.username}')">
+                                ${monthOptions}
+                            </select>
+                            <button class="btn btn-primary" style="padding: 10px 16px; font-size: 0.9rem;" onclick="navigateMonth('${employee.username}', ${year}, ${month}, 1)">
+                                Mes Siguiente →
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(37, 99, 235, 0.05)); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 2px solid rgba(37, 99, 235, 0.3);">
+                        <h2 style="color: var(--primary-color); margin: 0; font-size: 1.8rem; text-align: center;">
+                            📅 ${mockData.monthName} ${year}
+                        </h2>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">Usuario</p>
+                            <p style="color: var(--text-primary); font-weight: 600;"><code>${employee.username}</code></p>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">Email</p>
+                            <p style="color: var(--text-primary); font-weight: 600;">${employee.email}</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">Horas Diarias</p>
+                            <p style="color: var(--text-primary); font-weight: 600;">${config.dailyHours}h/día</p>
+                        </div>
+                        <div>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">Días Laborables</p>
+                            <p style="color: var(--text-primary); font-weight: 600;">${config.workDays.map(d => getDayShortName(d)).join(', ')}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="salary-box" style="margin-bottom: 25px;">
+                    <h3 style="color: var(--success-color); margin-bottom: 15px;">💰 Configuración Salarial</h3>
+                    <div class="salary-row">
+                        <span class="salary-label">Sueldo Mensual:</span>
+                        <span class="salary-value">${formatMoney(config.monthlySalary)}</span>
+                    </div>
+                    <div class="salary-row">
+                        <span class="salary-label">Sueldo Diario:</span>
+                        <span class="salary-value">${formatMoney(dailySalary)}</span>
+                    </div>
+                    <div class="salary-row">
+                        <span class="salary-label">Sueldo por Hora:</span>
+                        <span class="salary-value">${formatMoney(hourlySalary)}</span>
+                    </div>
+                    <div class="salary-row" style="border-top: 2px solid rgba(16, 185, 129, 0.3); padding-top: 15px; margin-top: 10px;">
+                        <span class="salary-label" style="font-weight: 700; color: var(--text-primary);">Costo Hora Extra:</span>
+                        <span class="salary-value" style="font-size: 1.4rem;">${formatMoney(hourlySalary)}</span>
+                    </div>
+                </div>
+
+                <div style="background: rgba(37, 99, 235, 0.1); padding: 20px; border-radius: 15px; margin-bottom: 25px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px;">📊 Resumen de ${mockData.monthName} ${year}</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="info-box">
+                            <div class="info-label">Días Laborables</div>
+                            <div class="info-value">${mockData.month.workDays}</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Días Trabajados</div>
+                            <div class="info-value" style="color: var(--success-color);">${mockData.month.daysWorked}</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Horas Totales</div>
+                            <div class="info-value">${formatHours(mockData.month.totalHours)}</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Horas Extra</div>
+                            <div class="info-value" style="color: var(--success-color);">${formatHours(mockData.month.extraHours)}</div>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-label">Días No Trabajados</div>
+                            <div class="info-value" style="color: var(--warning-color);">${mockData.month.daysNotWorked}</div>
+                        </div>
+                    </div>
+
+                    <div class="salary-box">
+                        <div class="salary-row">
+                            <span class="salary-label">Sueldo Mensual Base:</span>
+                            <span class="salary-value">${formatMoney(config.monthlySalary)}</span>
+                        </div>
+                        <div class="salary-row" style="color: var(--danger-color);">
+                            <span class="salary-label">Descuento por ${mockData.month.daysNotWorked} día(s) no trabajado(s):</span>
+                            <span class="salary-value" style="color: var(--danger-color);">- ${formatMoney(mockData.month.deduction)}</span>
+                        </div>
+                        <div class="salary-row">
+                            <span class="salary-label">Sueldo Base Ajustado:</span>
+                            <span class="salary-value">${formatMoney(mockData.month.baseSalary)}</span>
+                        </div>
+                        <div class="salary-row">
+                            <span class="salary-label">Pago por Horas Extra (${formatHours(mockData.month.extraHours)}):</span>
+                            <span class="salary-value" style="color: var(--success-color);">+ ${formatMoney(mockData.month.extraPay)}</span>
+                        </div>
+                        <div class="salary-row" style="border-top: 2px solid rgba(16, 185, 129, 0.3); padding-top: 15px; margin-top: 10px;">
+                            <span class="salary-label" style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem;">TOTAL A PAGAR EN ${mockData.monthName.toUpperCase()}:</span>
+                            <span class="salary-value" style="font-size: 1.6rem;">${formatMoney(mockData.month.totalPay)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 15px; margin-bottom: 25px;">
+                    <h3 style="color: var(--success-color); margin-bottom: 15px;">📊 Detalle por Semana</h3>
+                    
+                    ${mockData.weeks.map((week, index) => `
+                        <div style="background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                            <h4 style="color: var(--text-primary); margin-bottom: 10px;">Semana ${index + 1} (${week.dateRange})</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 15px;">
+                                <div>
+                                    <p style="color: var(--text-muted); font-size: 0.85rem;">Días Trabajados</p>
+                                    <p style="color: var(--text-primary); font-weight: 600; font-family: 'JetBrains Mono', monospace;">${week.days}</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted); font-size: 0.85rem;">Horas</p>
+                                    <p style="color: var(--text-primary); font-weight: 600; font-family: 'JetBrains Mono', monospace;">${formatHours(week.hours)}</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted); font-size: 0.85rem;">Extra</p>
+                                    <p style="color: var(--success-color); font-weight: 600; font-family: 'JetBrains Mono', monospace;">+${formatHours(week.extra)}</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted); font-size: 0.85rem;">Pago Extra</p>
+                                    <p style="color: var(--success-color); font-weight: 600; font-family: 'JetBrains Mono', monospace;">${formatMoney(week.extraPay)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="table-wrapper">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px; padding: 0 15px;">📋 Todos los Días del Mes</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Día</th>
+                                <th>Entrada</th>
+                                <th>Salida</th>
+                                <th>Horas</th>
+                                <th>Extra</th>
+                                <th>Pago Base</th>
+                                <th>Pago Extra</th>
+                                <th>Total</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${mockData.allDays.map(day => `
+                                <tr>
+                                    <td>${day.date}</td>
+                                    <td>${day.dayName}</td>
+                                    <td>${day.entry}</td>
+                                    <td>${day.exit}</td>
+                                    <td><strong>${formatHours(day.hours)}</strong></td>
+                                    <td style="color: ${day.extra > 0 ? 'var(--success-color)' : 'var(--text-muted)'}; font-weight: 600;">${day.extra > 0 ? '+' : ''}${formatHours(day.extra)}</td>
+                                    <td>${day.status === 'rest' ? '-' : (day.status === 'no_work' ? formatMoney(0) : formatMoney(dailySalary))}</td>
+                                    <td style="color: ${day.extraPay > 0 ? 'var(--success-color)' : 'var(--text-muted)'}; font-weight: 600;">${day.status === 'rest' ? '-' : formatMoney(day.extraPay)}</td>
+                                    <td><strong>${day.status === 'rest' ? '-' : formatMoney(day.totalPay)}</strong></td>
+                                    <td><span class="badge ${day.badgeClass}">${day.statusText}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot style="background: rgba(37, 99, 235, 0.1); font-weight: 700;">
+                            <tr>
+                                <td colspan="4" style="text-align: right; padding: 15px;">TOTALES:</td>
+                                <td style="color: var(--text-primary);">${formatHours(mockData.month.totalHours)}</td>
+                                <td style="color: var(--success-color);">+${formatHours(mockData.month.extraHours)}</td>
+                                <td>${formatMoney(mockData.month.baseSalary)}</td>
+                                <td style="color: var(--success-color);">${formatMoney(mockData.month.extraPay)}</td>
+                                <td style="color: var(--text-primary); font-size: 1.1rem;">${formatMoney(mockData.month.totalPay)}</td>
+                                <td>-</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div style="margin-top: 25px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                    ℹ️ Usa los botones o el selector para navegar entre meses
+                </div>
+            `;
+
+            document.getElementById('detailsModalTitle').innerHTML = `📊 Detalle de ${employee.fullName}`;
+            document.getElementById('employeeDetailsContent').innerHTML = content;
+            document.getElementById('employeeDetailsModal').classList.add('show');
+        }
+
+        function generateMonthOptions(currentYear, currentMonth) {
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            
+            let options = '';
+            
+            // Generar últimos 12 meses
+            for (let i = 0; i < 12; i++) {
+                const date = new Date(currentYear, currentMonth - i, 1);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const value = `${year}-${month}`;
+                const label = `${months[month]} ${year}`;
+                const selected = i === 0 ? 'selected' : '';
+                
+                options += `<option value="${value}" ${selected}>${label}</option>`;
+            }
+            
+            return options;
+        }
+
+        function changeEmployeeMonth(username) {
+            const selector = document.getElementById('monthSelector');
+            const [year, month] = selector.value.split('-').map(Number);
+            
+            const users = getUsers();
+            const employee = users[username];
+            
+            displayEmployeeDetailsForMonth(employee, year, month);
+        }
+
+        function navigateMonth(username, currentYear, currentMonth, direction) {
+            const users = getUsers();
+            const employee = users[username];
+            
+            let newMonth = currentMonth + direction;
+            let newYear = currentYear;
+            
+            // Ajustar año si es necesario
+            if (newMonth > 11) {
+                newMonth = 0;
+                newYear++;
+            } else if (newMonth < 0) {
+                newMonth = 11;
+                newYear--;
+            }
+            
+            // Validar que no vayamos más allá de 12 meses atrás
+            const today = new Date();
+            const maxPastDate = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+            const selectedDate = new Date(newYear, newMonth, 1);
+            
+            if (selectedDate < maxPastDate) {
+                showNotification('No hay datos disponibles para ese mes', 'error');
+                return;
+            }
+            
+            // No permitir meses futuros
+            if (selectedDate > today) {
+                showNotification('No se puede ver datos de meses futuros', 'error');
+                return;
+            }
+            
+            displayEmployeeDetailsForMonth(employee, newYear, newMonth);
+        }
+
+        function closeEmployeeDetailsModal() {
+            document.getElementById('employeeDetailsModal').classList.remove('show');
+        }
+
+        function generateMockEmployeeDataForMonth(employee, year, month) {
+            const config = employee.config;
+            const hourlySalary = calculateHourlySalary(config.monthlySalary, config.dailyHours);
+            const dailySalary = calculateDailySalary(config.monthlySalary);
+
+            const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+            // Calcular días del mes
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(year, month, 1);
+            
+            // Generar todos los días del mes
+            const allDays = [];
+            let totalHours = 0;
+            let extraHours = 0;
+            let daysWorked = 0;
+            let daysNotWorked = 0;
+            let workDaysInMonth = 0;
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dayOfWeek = date.getDay();
+                const isWorkDay = config.workDays.includes(dayOfWeek);
+
+                if (isWorkDay) {
+                    workDaysInMonth++;
+                }
+
+                let dayData = {
+                    date: `${day.toString().padStart(2, '0')}/${(month + 1).toString().padStart(2, '0')}`,
+                    dayName: getDayName(date),
+                    entry: '-',
+                    exit: '-',
+                    hours: 0,
+                    extra: 0,
+                    extraPay: 0,
+                    totalPay: 0,
+                    status: 'rest',
+                    badgeClass: 'badge-rest',
+                    statusText: '🏖️ Descanso'
+                };
+
+                if (isWorkDay) {
+                    // 80% probabilidad de trabajar
+                    const worked = Math.random() > 0.2;
+                    
+                    if (worked) {
+                        // Generar variación de ±0.5 horas (30 min) respecto a las horas configuradas
+                        const variation = (Math.random() - 0.5); // Rango de -0.5 a +0.5
+                        const hours = config.dailyHours + variation;
+                        const extra = Math.max(0, hours - config.dailyHours);
+                        const extraPay = calculateExtraPay(extra, hourlySalary);
+                        
+                        // Calcular hora de salida basada en entrada a las 8:00
+                        const totalMinutes = Math.round(hours * 60);
+                        const exitHour = 8 + Math.floor(totalMinutes / 60);
+                        const exitMinutes = totalMinutes % 60;
+                        
+                        dayData = {
+                            date: `${day.toString().padStart(2, '0')}/${(month + 1).toString().padStart(2, '0')}`,
+                            dayName: getDayName(date),
+                            entry: '08:00',
+                            exit: `${exitHour.toString().padStart(2, '0')}:${exitMinutes.toString().padStart(2, '0')}`,
+                            hours: hours,
+                            extra: extra,
+                            extraPay: extraPay,
+                            totalPay: dailySalary + extraPay,
+                            status: hours >= config.dailyHours ? 'complete' : 'incomplete',
+                            badgeClass: hours >= config.dailyHours ? 'badge-complete' : 'badge-incomplete',
+                            statusText: hours >= config.dailyHours ? '✅ Completo' : '⚠️ Incompleto'
+                        };
+
+                        totalHours += hours;
+                        extraHours += extra;
+                        daysWorked++;
+                    } else {
+                        // Día laboral no trabajado - se descuenta del sueldo mensual (no recibe pago ese día)
+                        dayData = {
+                            date: `${day.toString().padStart(2, '0')}/${(month + 1).toString().padStart(2, '0')}`,
+                            dayName: getDayName(date),
+                            entry: '-',
+                            exit: '-',
+                            hours: 0,
+                            extra: 0,
+                            extraPay: 0,
+                            totalPay: 0, // No trabajó, no recibe pago de ese día
+                            status: 'no_work',
+                            badgeClass: 'badge-no-work',
+                            statusText: '🚫 No trabajó'
+                        };
+                        daysNotWorked++;
+                    }
+                }
+
+                allDays.push(dayData);
+            }
+
+            // Generar datos por semana
+            const weeks = [];
+            let weekStart = new Date(firstDay);
+            
+            // Ajustar al lunes de la primera semana
+            while (weekStart.getDay() !== 1) {
+                weekStart.setDate(weekStart.getDate() - 1);
+            }
+
+            for (let w = 0; w < 5; w++) { // Máximo 5 semanas
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+
+                const weekDays = allDays.filter(d => {
+                    const [day, mon] = d.date.split('/').map(Number);
+                    const dayDate = new Date(year, month, day);
+                    return dayDate >= weekStart && dayDate <= weekEnd && d.status !== 'rest';
+                });
+
+                if (weekDays.length > 0) {
+                    const weekHours = weekDays.reduce((sum, d) => sum + d.hours, 0);
+                    const weekExtra = weekDays.reduce((sum, d) => sum + d.extra, 0);
+                    const weekExtraPay = calculateExtraPay(weekExtra, hourlySalary);
+
+                    weeks.push({
+                        dateRange: `${weekStart.getDate()}/${weekStart.getMonth() + 1} - ${weekEnd.getDate()}/${weekEnd.getMonth() + 1}`,
+                        days: weekDays.filter(d => d.status !== 'no_work').length,
+                        hours: weekHours,
+                        extra: weekExtra,
+                        extraPay: weekExtraPay
+                    });
+                }
+
+                weekStart.setDate(weekStart.getDate() + 7);
+                if (weekStart.getMonth() !== month) break;
+            }
+
+            const extraPay = calculateExtraPay(extraHours, hourlySalary);
+            // El sueldo base se ajusta según los días trabajados vs días laborables
+            const dailySalaryValue = config.monthlySalary / 30;
+            const deduction = daysNotWorked * dailySalaryValue; // Descuento por días no trabajados
+            const baseSalary = config.monthlySalary - deduction;
+            const totalPay = baseSalary + extraPay;
+
+            return {
+                monthName: months[month],
+                allDays: allDays,
+                weeks: weeks,
+                month: {
+                    workDays: workDaysInMonth,
+                    daysWorked: daysWorked,
+                    daysNotWorked: daysNotWorked,
+                    totalHours: totalHours,
+                    extraHours: extraHours,
+                    extraPay: extraPay,
+                    baseSalary: baseSalary,
+                    deduction: deduction,
+                    totalPay: totalPay
+                }
+            };
+        }
+
+        function getDayName(date) {
+            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            return days[date.getDay()];
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        window.onload = function() {
+            // Ocultar todas las pantallas primero
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            
+            // Verificar si hay usuarios, si no, cargar demo automáticamente
+            const users = getUsers();
+            if (Object.keys(users).length === 0) {
+                // Cargar datos demo automáticamente
+                loadDemoDataAuto();
+            }
+            
+            // Verificar si es la primera vez (sin setup completo)
+            if (!isSetupComplete()) {
+                // Si no hay usuarios demo cargados, mostrar setup
+                const usersCheck = getUsers();
+                if (Object.keys(usersCheck).length === 0) {
+                    showScreen('adminSetupScreen');
+                    return;
+                }
+            }
+
+            // Si ya está configurado, verificar sesión
+            const savedUser = sessionStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                if (currentUser.role === 'admin') {
+                    initAdminDashboard();
+                    showScreen('adminScreen');
+                } else {
+                    initEmployeeDashboard();
+                    showScreen('employeeScreen');
+                }
+            } else {
+                showScreen('loginScreen');
+            }
+        };
+
+        // Función para cargar datos demo automáticamente (sin confirmación)
+        function loadDemoDataAuto() {
+            // Datos de empresa demo
+            const companyData = {
+                name: 'Demo Company S.A.C.',
+                ruc: '20123456789',
+                address: 'Av. Demo 123, Lima',
+                phone: '+51 999 888 777',
+                email: 'contacto@democompany.com',
+                createdAt: new Date().toISOString()
+            };
+            saveCompanyData(companyData);
+
+            // Crear usuarios demo
+            const demoUsers = {
+                'admin': {
+                    username: 'admin',
+                    password: '123',
+                    fullName: 'Administrador Demo',
+                    email: 'admin@democompany.com',
+                    role: 'admin',
+                    active: true,
+                    createdAt: new Date().toISOString()
+                },
+                'bwayne': {
+                    username: 'bwayne',
+                    password: '123',
+                    fullName: 'Bruce Wayne',
+                    email: 'bruce@empresa.com',
+                    role: 'employee',
+                    active: true,
+                    config: {
+                        dailyHours: 5,
+                        workDays: [1, 2, 3, 4, 5],
+                        monthlySalary: 700
+                    },
+                    createdAt: new Date().toISOString()
+                },
+                'ckent': {
+                    username: 'ckent',
+                    password: '123',
+                    fullName: 'Clark Kent',
+                    email: 'clark@empresa.com',
+                    role: 'employee',
+                    active: true,
+                    config: {
+                        dailyHours: 8,
+                        workDays: [1, 2, 3, 4, 5, 6],
+                        monthlySalary: 1200
+                    },
+                    createdAt: new Date().toISOString()
+                }
+            };
+
+            saveUsers(demoUsers);
+            markSetupComplete();
+        }
+
+        window.onclick = function(event) {
+            const employeeModal = document.getElementById('employeeModal');
+            const detailsModal = document.getElementById('employeeDetailsModal');
+            const deleteModal = document.getElementById('deleteConfirmModal');
+            const companyModal = document.getElementById('companyInfoModal');
+            
+            if (event.target == employeeModal) closeEmployeeModal();
+            if (event.target == detailsModal) closeEmployeeDetailsModal();
+            if (event.target == deleteModal) closeDeleteConfirmModal();
+            if (event.target == companyModal) closeCompanyInfoModal();
+        }
+    </script>
+</body>
+</html>
