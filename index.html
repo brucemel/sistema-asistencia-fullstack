@@ -207,7 +207,7 @@
                         Para activar el servicio, comuníquese con el administrador de la plataforma:
                     </p>
                     <div style="background:rgba(37,99,235,0.2);padding:15px;border-radius:10px;">
-                        <span style="font-size:1.2rem;font-weight:700;color:var(--primary-color);">📧 superadmin@sistema.com</span>
+                        <span style="font-size:1.2rem;font-weight:700;color:var(--primary-color);">📧 soporte@sistema.com</span>
                     </div>
                 </div>
                 
@@ -501,9 +501,6 @@
         </div>
     </div>
 
-    <!-- MODAL CONFIRMAR ELIMINACIÓN -->
-    <div id="deleteModal" class="modal">
-
     <!-- ========== SUPER ADMIN SCREEN (OCULTO) ========== -->
     <div id="superAdminScreen" class="screen">
         <div class="container">
@@ -748,12 +745,16 @@
                     pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy }),
                     err => {
                         let msg = 'Error de ubicación';
-                        if(err.code === 1) msg = 'Permiso denegado';
-                        else if(err.code === 2) msg = 'Ubicación no disponible';
-                        else if(err.code === 3) msg = 'Tiempo agotado';
+                        if(err.code === 1) msg = 'Permiso denegado. Activa la ubicación en tu navegador.';
+                        else if(err.code === 2) msg = 'Ubicación no disponible. Activa el GPS.';
+                        else if(err.code === 3) msg = 'Tiempo agotado. Intenta en un lugar con mejor señal.';
                         reject(new Error(msg));
                     },
-                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                    { 
+                        enableHighAccuracy: true,  // Usar GPS si está disponible
+                        timeout: 30000,            // Esperar hasta 30 segundos
+                        maximumAge: 0              // No usar ubicación en caché
+                    }
                 );
             });
         }
@@ -1026,8 +1027,14 @@
         async function markEntry() {
             try {
                 document.getElementById('btnEntry').disabled = true;
-                document.getElementById('btnEntry').textContent = '📍 Obteniendo...';
+                document.getElementById('btnEntry').textContent = '📍 Obteniendo ubicación...';
                 const loc = await getPosition();
+                
+                // Advertencia si la precisión es mala (mayor a 50 metros)
+                if (loc.accuracy > 50) {
+                    notify('⚠️ Precisión baja: ' + Math.round(loc.accuracy) + 'm. Intenta estar al aire libre o activar GPS.', 'error');
+                }
+                
                 loc.address = await getAddress(loc.latitude, loc.longitude);
                 const now = new Date();
                 const time = now.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
@@ -1039,15 +1046,24 @@
                 updateUI();
                 // Notificación al navegador del admin
                 sendBrowserNotification('🟢 Entrada Registrada', currentUser.fullName + ' marcó ENTRADA a las ' + time);
-                notify('✅ Entrada: ' + time);
+                
+                // Mostrar precisión en la notificación
+                const precisionMsg = loc.accuracy <= 50 ? '📍 Precisión: ' + Math.round(loc.accuracy) + 'm ✅' : '📍 Precisión: ' + Math.round(loc.accuracy) + 'm ⚠️';
+                notify('✅ Entrada: ' + time + ' | ' + precisionMsg);
             } catch(e) { notify('❌ ' + e.message, 'error'); document.getElementById('btnEntry').disabled = false; }
             document.getElementById('btnEntry').textContent = '🟢 MARCAR ENTRADA';
         }
         async function markExit() {
             try {
                 document.getElementById('btnExit').disabled = true;
-                document.getElementById('btnExit').textContent = '📍 Obteniendo...';
+                document.getElementById('btnExit').textContent = '📍 Obteniendo ubicación...';
                 const loc = await getPosition();
+                
+                // Advertencia si la precisión es mala (mayor a 50 metros)
+                if (loc.accuracy > 50) {
+                    notify('⚠️ Precisión baja: ' + Math.round(loc.accuracy) + 'm. Intenta estar al aire libre o activar GPS.', 'error');
+                }
+                
                 loc.address = await getAddress(loc.latitude, loc.longitude);
                 const now = new Date();
                 const time = now.toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit' });
@@ -1060,7 +1076,10 @@
                 updateUI();
                 // Notificación al navegador del admin
                 sendBrowserNotification('🔴 Salida Registrada', currentUser.fullName + ' marcó SALIDA a las ' + time);
-                notify('✅ Salida: ' + time);
+                
+                // Mostrar precisión en la notificación
+                const precisionMsg = loc.accuracy <= 50 ? '📍 Precisión: ' + Math.round(loc.accuracy) + 'm ✅' : '📍 Precisión: ' + Math.round(loc.accuracy) + 'm ⚠️';
+                notify('✅ Salida: ' + time + ' | ' + precisionMsg);
             } catch(e) { notify('❌ ' + e.message, 'error'); document.getElementById('btnExit').disabled = false; }
             document.getElementById('btnExit').textContent = '🔴 MARCAR SALIDA';
         }
@@ -1794,15 +1813,15 @@
                     if (!company || company.status !== 'approved') {
                         document.getElementById('restrictedCompanyName').textContent = 'Empresa: ' + (company ? company.name : 'No asignada');
                         showScreen('restrictedScreen');
-                    } else if(currentUser.role === 'admin') { 
-                        initAdmin(); 
-                        showScreen('adminScreen'); 
-                    } else { 
-                        initEmployee(); 
-                        showScreen('employeeScreen'); 
+                    } else if(currentUser.role === 'admin') {
+                        initAdmin();
+                        showScreen('adminScreen');
+                    } else {
+                        initEmployee();
+                        showScreen('employeeScreen');
                     }
                 }
-            } else { showScreen('loginScreen'); }
+            }
         };
     </script>
 </body>
