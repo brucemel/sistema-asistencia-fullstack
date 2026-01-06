@@ -257,26 +257,40 @@
                     <button class="btn-entry" id="btnEntry" onclick="markEntry()">🟢 MARCAR ENTRADA</button>
                     <button class="btn-exit" id="btnExit" onclick="markExit()" disabled>🔴 MARCAR SALIDA</button>
                 </div>
-                <button class="btn-no-work" id="btnNoWork" onclick="markNoWork()">🚫 NO TRABAJO HOY</button>
+                <button class="btn-no-work" id="btnNoWork" onclick="showNoWorkForm()">🚫 NO TRABAJO HOY</button>
                 <div id="noWorkForm" style="display:none;margin-top:15px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);padding:20px;border-radius:12px;">
+                    <div style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:15px;margin-bottom:20px;">
+                        <h4 style="color:var(--danger-color);margin-bottom:10px;">⚠️ IMPORTANTE</h4>
+                        <p style="color:var(--text-secondary);font-size:0.85rem;margin:0;">
+                            Esta opción <strong>SOLO</strong> debe usarse en caso de:
+                        </p>
+                        <ul style="color:var(--text-secondary);font-size:0.85rem;margin:10px 0 0 20px;line-height:1.8;">
+                            <li>📋 Permiso autorizado por su supervisor</li>
+                            <li>🏥 Cita médica o emergencia de salud</li>
+                            <li>🏖️ Día de vacaciones programado</li>
+                            <li>🎉 Feriado oficial</li>
+                        </ul>
+                    </div>
                     <div class="form-group">
-                        <label class="form-label">Tipo:</label>
-                        <select id="noWorkType" class="form-input">
-                            <option value="">-- Selecciona --</option>
+                        <label class="form-label">📌 Tipo de Ausencia: *</label>
+                        <select id="noWorkType" class="form-input" required>
+                            <option value="">-- Selecciona el motivo --</option>
                             <option value="Permiso">📋 Permiso</option>
-                            <option value="Médico">🏥 Médico</option>
+                            <option value="Cita Médica">🏥 Cita Médica</option>
                             <option value="Vacaciones">🏖️ Vacaciones</option>
                             <option value="Feriado">🎉 Feriado</option>
+                            <option value="Emergencia Familiar">👨‍👩‍👧 Emergencia Familiar</option>
                             <option value="Otro">📝 Otro</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Detalle:</label>
-                        <textarea id="noWorkDetail" class="form-input" rows="2" placeholder="Razón..."></textarea>
+                        <label class="form-label">📝 Descripción (Detalle el motivo): *</label>
+                        <textarea id="noWorkDetail" class="form-input" rows="3" placeholder="Ejemplo: Tengo cita médica programada con el Dr. García a las 10:00 AM en el Hospital Regional..." required></textarea>
+                        <small style="color:var(--text-muted);font-size:0.75rem;">Mínimo 10 caracteres. Sea específico para facilitar la aprobación.</small>
                     </div>
-                    <div style="display:flex;gap:10px;">
-                        <button class="btn btn-success" style="flex:1" onclick="confirmNoWork()">✅ Confirmar</button>
-                        <button class="btn btn-danger" style="flex:1" onclick="cancelNoWork()">❌ Cancelar</button>
+                    <div style="display:flex;gap:10px;margin-top:15px;">
+                        <button class="btn btn-success" style="flex:1" onclick="confirmNoWork()">✅ Confirmar Ausencia</button>
+                        <button class="btn btn-secondary" style="flex:1" onclick="cancelNoWork()">❌ Cancelar</button>
                     </div>
                 </div>
             </div>
@@ -326,7 +340,7 @@
                 </div>
                 <div class="table-wrapper">
                     <table>
-                        <thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Ubicación</th><th>Estado</th></tr></thead>
+                        <thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Ubicación</th><th>Estado</th><th>Detalle</th></tr></thead>
                         <tbody id="historyTable"></tbody>
                     </table>
                 </div>
@@ -396,7 +410,7 @@
                     </div>
                     <div class="table-wrapper">
                         <table>
-                            <thead><tr><th>Empleado</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Ubicación</th><th>Estado</th></tr></thead>
+                            <thead><tr><th>Empleado</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Ubicación</th><th>Estado</th><th>Detalle</th></tr></thead>
                             <tbody id="adminHistoryTable"></tbody>
                         </table>
                     </div>
@@ -1083,25 +1097,55 @@
             } catch(e) { notify('❌ ' + e.message, 'error'); document.getElementById('btnExit').disabled = false; }
             document.getElementById('btnExit').textContent = '🔴 MARCAR SALIDA';
         }
-        function markNoWork() {
-            if(confirm('⚠️ Solo para permisos o ausencias justificadas.\n\n¿Continuar?')) {
-                document.getElementById('noWorkForm').style.display = 'block';
-            }
+        function showNoWorkForm() {
+            document.getElementById('noWorkForm').style.display = 'block';
+            document.getElementById('noWorkType').value = '';
+            document.getElementById('noWorkDetail').value = '';
+            document.getElementById('btnNoWork').disabled = true;
         }
         function confirmNoWork() {
             const type = document.getElementById('noWorkType').value;
-            const detail = document.getElementById('noWorkDetail').value;
-            if(!type) { notify('❌ Selecciona tipo', 'error'); return; }
+            const detail = document.getElementById('noWorkDetail').value.trim();
+            
+            // Validaciones
+            if(!type) { 
+                notify('❌ Debe seleccionar el tipo de ausencia', 'error'); 
+                return; 
+            }
+            if(!detail || detail.length < 10) { 
+                notify('❌ La descripción debe tener al menos 10 caracteres', 'error'); 
+                return; 
+            }
+            
+            // Confirmación final
+            if(!confirm(`¿Confirmar ausencia por "${type}"?\n\nDescripción: ${detail}\n\nEsta acción quedará registrada.`)) {
+                return;
+            }
+            
             const records = getRecords();
             const key = `${currentUser.username}_${getTodayKey()}`;
-            todayRecord = { username: currentUser.username, fullName: currentUser.fullName, date: getTodayKey(), noWork: true, noWorkType: type, noWorkDetail: detail };
+            todayRecord = { 
+                username: currentUser.username, 
+                fullName: currentUser.fullName, 
+                date: getTodayKey(), 
+                noWork: true, 
+                noWorkType: type, 
+                noWorkDetail: detail,
+                registeredAt: new Date().toISOString()
+            };
             records[key] = todayRecord;
             saveRecords(records);
             document.getElementById('noWorkForm').style.display = 'none';
+            document.getElementById('btnNoWork').disabled = true;
             updateUI();
-            notify('✅ Ausencia registrada');
+            notify('✅ Ausencia registrada correctamente');
         }
-        function cancelNoWork() { document.getElementById('noWorkForm').style.display = 'none'; }
+        function cancelNoWork() { 
+            document.getElementById('noWorkForm').style.display = 'none'; 
+            document.getElementById('btnNoWork').disabled = false;
+            document.getElementById('noWorkType').value = '';
+            document.getElementById('noWorkDetail').value = '';
+        }
 
         // EMPLOYEE HISTORY
         function initHistoryFilter() {
@@ -1130,11 +1174,15 @@
                 const rec = records[key];
                 const future = date > today;
                 const isWork = cfg.workDays.includes(dow);
-                let entry='-', exit='-', hours='-', loc='-', status='', badge='badge-muted';
+                let entry='-', exit='-', hours='-', loc='-', status='', badge='badge-muted', detail='-';
                 if(future) { status='📅 Pendiente'; }
                 else if(!isWork && !rec) { status='🏖️ Descanso'; }
                 else if(rec) {
-                    if(rec.noWork) { status='🚫 '+rec.noWorkType; badge='badge-warning'; }
+                    if(rec.noWork) { 
+                        status='🚫 '+rec.noWorkType; 
+                        badge='badge-warning'; 
+                        detail = rec.noWorkDetail ? `<span title="${rec.noWorkDetail}" style="cursor:help;color:var(--warning-color);">📝 ${rec.noWorkDetail.substring(0,20)}${rec.noWorkDetail.length > 20 ? '...' : ''}</span>` : '-';
+                    }
                     else {
                         entry = rec.entryTime || '-';
                         exit = rec.exitTime || '-';
@@ -1147,9 +1195,9 @@
                         if(rec.entryLoc) loc = `<button class="btn btn-primary btn-sm" onclick="showLoc(${rec.entryLoc.latitude},${rec.entryLoc.longitude},'${(rec.entryLoc.address||'').replace(/'/g,"\\'")}')">📍</button>`;
                     }
                 } else if(isWork) { status='❌ Falta'; badge='badge-danger'; }
-                html += `<tr style="${future?'opacity:0.5':''}"><td>${day}/${month+1} (${getDayName(dow)})</td><td>${entry}</td><td>${exit}</td><td>${hours}</td><td>${loc}</td><td><span class="badge ${badge}">${status}</span></td></tr>`;
+                html += `<tr style="${future?'opacity:0.5':''}"><td>${day}/${month+1} (${getDayName(dow)})</td><td>${entry}</td><td>${exit}</td><td>${hours}</td><td>${loc}</td><td><span class="badge ${badge}">${status}</span></td><td>${detail}</td></tr>`;
             }
-            document.getElementById('historyTable').innerHTML = html || '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted)">Sin registros</td></tr>';
+            document.getElementById('historyTable').innerHTML = html || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">Sin registros</td></tr>';
         }
 
         // ADMIN FUNCTIONS
@@ -1622,10 +1670,14 @@
                     const key = `${emp.username}_${dateKey}`;
                     const rec = records[key];
                     const isWork = emp.config.workDays.includes(dow);
-                    let entry='-', exit='-', hours='-', loc='-', status='', badge='badge-muted';
+                    let entry='-', exit='-', hours='-', loc='-', status='', badge='badge-muted', detail='-';
                     if(!isWork && !rec) { status='🏖️ Descanso'; }
                     else if(rec) {
-                        if(rec.noWork) { status='🚫 '+rec.noWorkType; badge='badge-warning'; }
+                        if(rec.noWork) { 
+                            status='🚫 '+rec.noWorkType; 
+                            badge='badge-warning'; 
+                            detail = rec.noWorkDetail ? `<span title="${rec.noWorkDetail}" style="cursor:help;color:var(--warning-color);">📝 ${rec.noWorkDetail.substring(0,25)}${rec.noWorkDetail.length > 25 ? '...' : ''}</span>` : '-';
+                        }
                         else {
                             entry = rec.entryTime || '-';
                             exit = rec.exitTime || '-';
@@ -1638,10 +1690,10 @@
                             if(rec.entryLoc) loc = `<button class="btn btn-primary btn-sm" onclick="showLoc(${rec.entryLoc.latitude},${rec.entryLoc.longitude},'${(rec.entryLoc.address||'').replace(/'/g,"\\'")}')">📍</button>`;
                         }
                     } else if(isWork) { status='❌ Falta'; badge='badge-danger'; }
-                    if(status) html += `<tr><td>${emp.fullName}</td><td>${day}/${month+1} (${getDayName(dow)})</td><td>${entry}</td><td>${exit}</td><td>${hours}</td><td>${loc}</td><td><span class="badge ${badge}">${status}</span></td></tr>`;
+                    if(status) html += `<tr><td>${emp.fullName}</td><td>${day}/${month+1} (${getDayName(dow)})</td><td>${entry}</td><td>${exit}</td><td>${hours}</td><td>${loc}</td><td><span class="badge ${badge}">${status}</span></td><td>${detail}</td></tr>`;
                 }
             });
-            document.getElementById('adminHistoryTable').innerHTML = html || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">Sin registros</td></tr>';
+            document.getElementById('adminHistoryTable').innerHTML = html || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">Sin registros</td></tr>';
         }
 
         // MAP FUNCTIONS
