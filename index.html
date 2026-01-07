@@ -336,11 +336,14 @@
             <div class="card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;flex-wrap:wrap;gap:10px;">
                     <h2 class="card-title" style="margin:0;">📋 Mi Historial</h2>
-                    <select id="historyMonth" class="form-input" style="width:auto;" onchange="loadHistory()"></select>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <select id="historyMonth" class="form-input" style="width:auto;" onchange="loadHistory()"></select>
+                        <button class="btn btn-success btn-sm" onclick="exportEmployeeExcel()">📥 Exportar Excel</button>
+                    </div>
                 </div>
                 <div class="table-wrapper">
                     <table>
-                        <thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Ubicación</th><th>Estado</th><th>Detalle</th></tr></thead>
+                        <thead><tr><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Estado</th><th>Puntualidad</th><th>Detalle</th></tr></thead>
                         <tbody id="historyTable"></tbody>
                     </table>
                 </div>
@@ -403,14 +406,15 @@
                 <div class="card">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
                         <h2 class="card-title" style="margin:0;">📋 Historial</h2>
-                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                             <select id="adminEmpFilter" class="form-input" style="width:auto;" onchange="loadAdminHistory()"><option value="all">Todos</option></select>
                             <select id="adminMonthFilter" class="form-input" style="width:auto;" onchange="loadAdminHistory()"></select>
+                            <button class="btn btn-success btn-sm" onclick="exportAdminExcel()">📥 Exportar Excel</button>
                         </div>
                     </div>
                     <div class="table-wrapper">
                         <table>
-                            <thead><tr><th>Empleado</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Ubicación</th><th>Estado</th><th>Detalle</th></tr></thead>
+                            <thead><tr><th>Empleado</th><th>Fecha</th><th>Entrada</th><th>Salida</th><th>Horas</th><th>Puntualidad</th><th>Estado</th><th>Detalle</th></tr></thead>
                             <tbody id="adminHistoryTable"></tbody>
                         </table>
                     </div>
@@ -441,6 +445,26 @@
                 <div class="form-group"><label class="form-label">Nombre</label><input type="text" id="newEmpName" class="form-input" required></div>
                 <div class="form-group"><label class="form-label">Email</label><input type="email" id="newEmpEmail" class="form-input" required></div>
                 <div class="form-group"><label class="form-label">Contraseña</label><input type="password" id="newEmpPass" class="form-input" placeholder="Dejar vacío para no cambiar"></div>
+                
+                <div style="background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.3);border-radius:12px;padding:15px;margin-bottom:15px;">
+                    <h4 style="color:var(--primary-color);margin-bottom:15px;">⏰ Horario de Trabajo</h4>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label">🟢 Hora Entrada</label>
+                            <input type="time" id="newEmpEntryTime" class="form-input" value="08:00" required>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label class="form-label">🔴 Hora Salida</label>
+                            <input type="time" id="newEmpExitTime" class="form-input" value="17:00" required>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:15px;margin-bottom:0;">
+                        <label class="form-label">⏱️ Tolerancia de Tardanza (minutos)</label>
+                        <input type="number" id="newEmpTolerance" class="form-input" value="15" min="0" max="60">
+                        <small style="color:var(--text-muted);font-size:0.75rem;">Minutos de gracia antes de considerar tardanza</small>
+                    </div>
+                </div>
+                
                 <div class="form-group"><label class="form-label">Horas/Día</label><input type="number" id="newEmpHours" class="form-input" value="8" min="1" max="24" required></div>
                 <div class="form-group"><label class="form-label">Sueldo Mensual (S/)</label><input type="number" id="newEmpSalary" class="form-input" value="1500" required></div>
                 <div class="form-group">
@@ -717,8 +741,8 @@
             const users = {
                 'superadmin': { username:'superadmin', password:'super123', fullName:'Super Administrador', email:SUPER_ADMIN_EMAIL, role:'superadmin', active:true },
                 'admin': { username:'admin', password:'123', fullName:'Administrador', role:'admin', companyId:'default', active:true },
-                'jperez': { username:'jperez', password:'123', fullName:'Juan Pérez', email:'juan@empresa.com', role:'employee', companyId:'default', active:true, config:{ dailyHours:8, workDays:[1,2,3,4,5], monthlySalary:2000, overtimeRate:1.5 }},
-                'mgarcia': { username:'mgarcia', password:'123', fullName:'María García', email:'maria@empresa.com', role:'employee', companyId:'default', active:true, config:{ dailyHours:6, workDays:[1,2,3,4,5,6], monthlySalary:1500, overtimeRate:1.5 }},
+                'jperez': { username:'jperez', password:'123', fullName:'Juan Pérez', email:'juan@empresa.com', role:'employee', companyId:'default', active:true, config:{ dailyHours:8, workDays:[1,2,3,4,5], monthlySalary:2000, overtimeRate:1.5, scheduleEntry:'08:00', scheduleExit:'17:00', tolerance:15 }},
+                'mgarcia': { username:'mgarcia', password:'123', fullName:'María García', email:'maria@empresa.com', role:'employee', companyId:'default', active:true, config:{ dailyHours:6, workDays:[1,2,3,4,5,6], monthlySalary:1500, overtimeRate:1.5, scheduleEntry:'09:00', scheduleExit:'16:00', tolerance:10 }},
                 'demo@empresa.com': { username:'demo@empresa.com', password:'demo123', fullName:'Admin Demo (Sin Acceso)', email:'demo@empresa.com', role:'admin', companyId:'demo_company', active:true }
             };
             saveCompanies(companies);
@@ -1159,6 +1183,22 @@
             sel.innerHTML = opts;
             loadHistory();
         }
+        
+        // Función para calcular tardanza
+        function checkTardiness(entryTime, scheduleEntry, tolerance) {
+            if (!entryTime || !scheduleEntry) return { late: false, minutes: 0 };
+            const [eH, eM] = entryTime.split(':').map(Number);
+            const [sH, sM] = scheduleEntry.split(':').map(Number);
+            const entryMinutes = eH * 60 + eM;
+            const scheduleMinutes = sH * 60 + sM;
+            const diff = entryMinutes - scheduleMinutes;
+            const tol = tolerance || 15;
+            return {
+                late: diff > tol,
+                minutes: diff > 0 ? diff : 0
+            };
+        }
+        
         function loadHistory() {
             const [year, month] = document.getElementById('historyMonth').value.split('-').map(Number);
             const cfg = currentUser.config;
@@ -1174,7 +1214,7 @@
                 const rec = records[key];
                 const future = date > today;
                 const isWork = cfg.workDays.includes(dow);
-                let entry='-', exit='-', hours='-', loc='-', status='', badge='badge-muted', detail='-';
+                let entry='-', exit='-', hours='-', status='', badge='badge-muted', detail='-', punctuality='-';
                 if(future) { status='📅 Pendiente'; }
                 else if(!isWork && !rec) { status='🏖️ Descanso'; }
                 else if(rec) {
@@ -1186,16 +1226,26 @@
                     else {
                         entry = rec.entryTime || '-';
                         exit = rec.exitTime || '-';
+                        
+                        // Verificar tardanza
+                        const tardiness = checkTardiness(rec.entryTime, cfg.scheduleEntry || '08:00', cfg.tolerance || 15);
+                        if (rec.entryTime) {
+                            if (tardiness.late) {
+                                punctuality = `<span class="badge badge-danger">⏰ Tarde ${tardiness.minutes} min</span>`;
+                            } else {
+                                punctuality = `<span class="badge badge-success">✅ Puntual</span>`;
+                            }
+                        }
+                        
                         if(rec.entryTime && rec.exitTime) {
                             const [eH,eM] = rec.entryTime.split(':').map(Number);
                             const [xH,xM] = rec.exitTime.split(':').map(Number);
                             hours = formatHours((xH+xM/60)-(eH+eM/60));
                             status='✅ OK'; badge='badge-success';
                         } else { status='⚠️ Incompleto'; badge='badge-warning'; }
-                        if(rec.entryLoc) loc = `<button class="btn btn-primary btn-sm" onclick="showLoc(${rec.entryLoc.latitude},${rec.entryLoc.longitude},'${(rec.entryLoc.address||'').replace(/'/g,"\\'")}')">📍</button>`;
                     }
                 } else if(isWork) { status='❌ Falta'; badge='badge-danger'; }
-                html += `<tr style="${future?'opacity:0.5':''}"><td>${day}/${month+1} (${getDayName(dow)})</td><td>${entry}</td><td>${exit}</td><td>${hours}</td><td>${loc}</td><td><span class="badge ${badge}">${status}</span></td><td>${detail}</td></tr>`;
+                html += `<tr style="${future?'opacity:0.5':''}"><td>${day}/${month+1} (${getDayName(dow)})</td><td>${entry}</td><td>${exit}</td><td>${hours}</td><td><span class="badge ${badge}">${status}</span></td><td>${punctuality}</td><td>${detail}</td></tr>`;
             }
             document.getElementById('historyTable').innerHTML = html || '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted)">Sin registros</td></tr>';
         }
@@ -1289,6 +1339,9 @@
             document.getElementById('newEmpPass').placeholder = 'Contraseña';
             document.getElementById('newEmpHours').value = '8';
             document.getElementById('newEmpSalary').value = '1500';
+            document.getElementById('newEmpEntryTime').value = '08:00';
+            document.getElementById('newEmpExitTime').value = '17:00';
+            document.getElementById('newEmpTolerance').value = '15';
             document.querySelectorAll('input[name="workDays"]').forEach(cb => {
                 cb.checked = [1,2,3,4,5].includes(parseInt(cb.value));
             });
@@ -1312,6 +1365,9 @@
             document.getElementById('newEmpPass').placeholder = 'Dejar vacío para no cambiar';
             document.getElementById('newEmpHours').value = emp.config.dailyHours;
             document.getElementById('newEmpSalary').value = emp.config.monthlySalary;
+            document.getElementById('newEmpEntryTime').value = emp.config.scheduleEntry || '08:00';
+            document.getElementById('newEmpExitTime').value = emp.config.scheduleExit || '17:00';
+            document.getElementById('newEmpTolerance').value = emp.config.tolerance || 15;
             document.querySelectorAll('input[name="workDays"]').forEach(cb => {
                 cb.checked = emp.config.workDays.includes(parseInt(cb.value));
             });
@@ -1331,6 +1387,9 @@
             const username = document.getElementById('newEmpUser').value.trim().toLowerCase();
             const password = document.getElementById('newEmpPass').value;
             const workDays = Array.from(document.querySelectorAll('input[name="workDays"]:checked')).map(c => parseInt(c.value));
+            const scheduleEntry = document.getElementById('newEmpEntryTime').value;
+            const scheduleExit = document.getElementById('newEmpExitTime').value;
+            const tolerance = parseInt(document.getElementById('newEmpTolerance').value) || 15;
             
             if(!editingUser && users[username]) { 
                 notify('❌ Usuario ya existe', 'error'); 
@@ -1345,6 +1404,9 @@
                 users[editingUser].config.dailyHours = parseInt(document.getElementById('newEmpHours').value);
                 users[editingUser].config.monthlySalary = parseFloat(document.getElementById('newEmpSalary').value);
                 users[editingUser].config.workDays = workDays;
+                users[editingUser].config.scheduleEntry = scheduleEntry;
+                users[editingUser].config.scheduleExit = scheduleExit;
+                users[editingUser].config.tolerance = tolerance;
                 notify('✅ Empleado actualizado');
             } else {
                 // Adding new employee
@@ -1354,11 +1416,15 @@
                     fullName: document.getElementById('newEmpName').value,
                     email: document.getElementById('newEmpEmail').value,
                     role: 'employee',
+                    companyId: currentUser.companyId,
                     active: true,
                     config: {
                         dailyHours: parseInt(document.getElementById('newEmpHours').value),
                         monthlySalary: parseFloat(document.getElementById('newEmpSalary').value),
-                        workDays
+                        workDays,
+                        scheduleEntry,
+                        scheduleExit,
+                        tolerance
                     }
                 };
                 notify('✅ Empleado agregado');
@@ -1662,6 +1728,7 @@
             let html = '';
             const filteredEmps = empFilter === 'all' ? emps : emps.filter(e => e.username === empFilter);
             filteredEmps.forEach(emp => {
+                const cfg = emp.config;
                 for(let day=1; day<=days; day++) {
                     const date = new Date(year, month, day);
                     if(date > today) continue;
@@ -1669,8 +1736,8 @@
                     const dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
                     const key = `${emp.username}_${dateKey}`;
                     const rec = records[key];
-                    const isWork = emp.config.workDays.includes(dow);
-                    let entry='-', exit='-', hours='-', loc='-', status='', badge='badge-muted', detail='-';
+                    const isWork = cfg.workDays.includes(dow);
+                    let entry='-', exit='-', hours='-', status='', badge='badge-muted', detail='-', punctuality='-';
                     if(!isWork && !rec) { status='🏖️ Descanso'; }
                     else if(rec) {
                         if(rec.noWork) { 
@@ -1681,16 +1748,26 @@
                         else {
                             entry = rec.entryTime || '-';
                             exit = rec.exitTime || '-';
+                            
+                            // Verificar tardanza
+                            const tardiness = checkTardiness(rec.entryTime, cfg.scheduleEntry || '08:00', cfg.tolerance || 15);
+                            if (rec.entryTime) {
+                                if (tardiness.late) {
+                                    punctuality = `<span class="badge badge-danger">⏰ ${tardiness.minutes} min</span>`;
+                                } else {
+                                    punctuality = `<span class="badge badge-success">✅</span>`;
+                                }
+                            }
+                            
                             if(rec.entryTime && rec.exitTime) {
                                 const [eH,eM] = rec.entryTime.split(':').map(Number);
                                 const [xH,xM] = rec.exitTime.split(':').map(Number);
                                 hours = formatHours((xH+xM/60)-(eH+eM/60));
                                 status='✅ OK'; badge='badge-success';
                             } else { status='⚠️ Incompleto'; badge='badge-warning'; }
-                            if(rec.entryLoc) loc = `<button class="btn btn-primary btn-sm" onclick="showLoc(${rec.entryLoc.latitude},${rec.entryLoc.longitude},'${(rec.entryLoc.address||'').replace(/'/g,"\\'")}')">📍</button>`;
                         }
                     } else if(isWork) { status='❌ Falta'; badge='badge-danger'; }
-                    if(status) html += `<tr><td>${emp.fullName}</td><td>${day}/${month+1} (${getDayName(dow)})</td><td>${entry}</td><td>${exit}</td><td>${hours}</td><td>${loc}</td><td><span class="badge ${badge}">${status}</span></td><td>${detail}</td></tr>`;
+                    if(status) html += `<tr><td>${emp.fullName}</td><td>${day}/${month+1} (${getDayName(dow)})</td><td>${entry}</td><td>${exit}</td><td>${hours}</td><td>${punctuality}</td><td><span class="badge ${badge}">${status}</span></td><td>${detail}</td></tr>`;
                 }
             });
             document.getElementById('adminHistoryTable').innerHTML = html || '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text-muted)">Sin registros</td></tr>';
@@ -1875,6 +1952,190 @@
                 }
             }
         };
+        
+        // ========== FUNCIONES DE EXPORTAR A EXCEL ==========
+        function exportToExcel(data, filename) {
+            // Crear contenido CSV con BOM para UTF-8
+            let csv = '\uFEFF';
+            
+            // Headers
+            csv += data.headers.join(',') + '\n';
+            
+            // Rows
+            data.rows.forEach(row => {
+                csv += row.map(cell => {
+                    // Escapar comillas y envolver en comillas si contiene comas
+                    const str = String(cell).replace(/"/g, '""');
+                    return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
+                }).join(',') + '\n';
+            });
+            
+            // Crear blob y descargar
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename + '.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+            notify('✅ Archivo exportado correctamente');
+        }
+        
+        // Exportar historial del empleado
+        function exportEmployeeExcel() {
+            const [year, month] = document.getElementById('historyMonth').value.split('-').map(Number);
+            const cfg = currentUser.config;
+            const records = getRecords();
+            const days = new Date(year, month+1, 0).getDate();
+            const today = new Date();
+            
+            const data = {
+                headers: ['Fecha', 'Día', 'Entrada', 'Salida', 'Horas Trabajadas', 'Horario Esperado', 'Estado', 'Puntualidad', 'Minutos Tarde', 'Detalle'],
+                rows: []
+            };
+            
+            for(let day=1; day<=days; day++) {
+                const date = new Date(year, month, day);
+                if(date > today) continue;
+                const dow = date.getDay();
+                const dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
+                const key = `${currentUser.username}_${dateKey}`;
+                const rec = records[key];
+                const isWork = cfg.workDays.includes(dow);
+                
+                let entry='-', exit='-', hours='-', status='', punctuality='-', lateMinutes=0, detail='-';
+                const scheduleEntry = cfg.scheduleEntry || '08:00';
+                const scheduleExit = cfg.scheduleExit || '17:00';
+                
+                if(!isWork && !rec) { status='Descanso'; }
+                else if(rec) {
+                    if(rec.noWork) { 
+                        status = rec.noWorkType;
+                        detail = rec.noWorkDetail || '-';
+                    } else {
+                        entry = rec.entryTime || '-';
+                        exit = rec.exitTime || '-';
+                        
+                        if(rec.entryTime) {
+                            const tardiness = checkTardiness(rec.entryTime, scheduleEntry, cfg.tolerance || 15);
+                            punctuality = tardiness.late ? 'TARDE' : 'Puntual';
+                            lateMinutes = tardiness.minutes;
+                        }
+                        
+                        if(rec.entryTime && rec.exitTime) {
+                            const [eH,eM] = rec.entryTime.split(':').map(Number);
+                            const [xH,xM] = rec.exitTime.split(':').map(Number);
+                            const hoursWorked = (xH+xM/60)-(eH+eM/60);
+                            hours = hoursWorked.toFixed(2);
+                            status = 'Completado';
+                        } else { 
+                            status = 'Incompleto'; 
+                        }
+                    }
+                } else if(isWork) { 
+                    status = 'Falta'; 
+                }
+                
+                data.rows.push([
+                    `${day}/${month+1}/${year}`,
+                    getDayName(dow),
+                    entry,
+                    exit,
+                    hours,
+                    `${scheduleEntry} - ${scheduleExit}`,
+                    status,
+                    punctuality,
+                    lateMinutes,
+                    detail
+                ]);
+            }
+            
+            const monthName = getMonthName(month);
+            exportToExcel(data, `Asistencia_${currentUser.fullName}_${monthName}_${year}`);
+        }
+        
+        // Exportar historial del admin
+        function exportAdminExcel() {
+            const empFilter = document.getElementById('adminEmpFilter').value;
+            const [year, month] = document.getElementById('adminMonthFilter').value.split('-').map(Number);
+            const emps = getEmployees();
+            const records = getRecords();
+            const days = new Date(year, month+1, 0).getDate();
+            const today = new Date();
+            
+            const data = {
+                headers: ['Empleado', 'Usuario', 'Fecha', 'Día', 'Entrada', 'Salida', 'Horas Trabajadas', 'Horario Esperado', 'Estado', 'Puntualidad', 'Minutos Tarde', 'Detalle'],
+                rows: []
+            };
+            
+            const filteredEmps = empFilter === 'all' ? emps : emps.filter(e => e.username === empFilter);
+            
+            filteredEmps.forEach(emp => {
+                const cfg = emp.config;
+                for(let day=1; day<=days; day++) {
+                    const date = new Date(year, month, day);
+                    if(date > today) continue;
+                    const dow = date.getDay();
+                    const dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
+                    const key = `${emp.username}_${dateKey}`;
+                    const rec = records[key];
+                    const isWork = cfg.workDays.includes(dow);
+                    
+                    let entry='-', exit='-', hours='-', status='', punctuality='-', lateMinutes=0, detail='-';
+                    const scheduleEntry = cfg.scheduleEntry || '08:00';
+                    const scheduleExit = cfg.scheduleExit || '17:00';
+                    
+                    if(!isWork && !rec) { status='Descanso'; }
+                    else if(rec) {
+                        if(rec.noWork) { 
+                            status = rec.noWorkType;
+                            detail = rec.noWorkDetail || '-';
+                        } else {
+                            entry = rec.entryTime || '-';
+                            exit = rec.exitTime || '-';
+                            
+                            if(rec.entryTime) {
+                                const tardiness = checkTardiness(rec.entryTime, scheduleEntry, cfg.tolerance || 15);
+                                punctuality = tardiness.late ? 'TARDE' : 'Puntual';
+                                lateMinutes = tardiness.minutes;
+                            }
+                            
+                            if(rec.entryTime && rec.exitTime) {
+                                const [eH,eM] = rec.entryTime.split(':').map(Number);
+                                const [xH,xM] = rec.exitTime.split(':').map(Number);
+                                const hoursWorked = (xH+xM/60)-(eH+eM/60);
+                                hours = hoursWorked.toFixed(2);
+                                status = 'Completado';
+                            } else { 
+                                status = 'Incompleto'; 
+                            }
+                        }
+                    } else if(isWork) { 
+                        status = 'Falta'; 
+                    }
+                    
+                    if(status) {
+                        data.rows.push([
+                            emp.fullName,
+                            emp.username,
+                            `${day}/${month+1}/${year}`,
+                            getDayName(dow),
+                            entry,
+                            exit,
+                            hours,
+                            `${scheduleEntry} - ${scheduleExit}`,
+                            status,
+                            punctuality,
+                            lateMinutes,
+                            detail
+                        ]);
+                    }
+                }
+            });
+            
+            const monthName = getMonthName(month);
+            const empName = empFilter === 'all' ? 'Todos' : filteredEmps[0]?.fullName || 'Empleado';
+            exportToExcel(data, `Asistencia_${empName}_${monthName}_${year}`);
+        }
     </script>
 </body>
 </html>
