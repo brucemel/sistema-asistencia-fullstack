@@ -829,10 +829,14 @@
         let pathCoordinates = [];
         let trackingActive = false;
         let updateCounter = 0;
+        let lastSavedPosition = null; // Para evitar guardar posiciones duplicadas
         
         function getPosition() {
             return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) { reject(new Error('Geolocalización no soportada')); return; }
+                if (!navigator.geolocation) { 
+                    reject(new Error('Geolocalización no soportada')); 
+                    return; 
+                }
                 navigator.geolocation.getCurrentPosition(
                     pos => resolve({ 
                         latitude: pos.coords.latitude, 
@@ -858,78 +862,122 @@
             });
         }
         
+        // Calcular distancia entre dos puntos (en metros)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000; // Radio de la tierra en metros
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
         // Inicializar mapa del empleado
         function initEmployeeMap(lat, lng) {
             const mapContainer = document.getElementById('employeeLiveMap');
-            if (!mapContainer) return;
+            if (!mapContainer) {
+                console.error('❌ Contenedor del mapa no encontrado');
+                return;
+            }
             
             // Destruir mapa existente si hay
             if (employeeMap) {
-                employeeMap.remove();
+                try {
+                    employeeMap.remove();
+                } catch(e) {
+                    console.warn('Error al remover mapa:', e);
+                }
                 employeeMap = null;
+                employeeMarker = null;
+                employeePath = null;
             }
             
-            // Crear nuevo mapa
-            employeeMap = L.map('employeeLiveMap').setView([lat, lng], 17);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
-            }).addTo(employeeMap);
-            
-            // Crear marcador animado
-            const pulsingIcon = L.divIcon({
-                className: '',
-                html: `<div style="position:relative;">
-                    <div style="width:20px;height:20px;background:#ef4444;border-radius:50%;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);"></div>
-                    <div style="position:absolute;top:-5px;left:-5px;width:30px;height:30px;background:rgba(239,68,68,0.3);border-radius:50%;animation:pulse-marker 2s infinite;"></div>
-                </div>
-                <style>@keyframes pulse-marker{0%{transform:scale(1);opacity:1}100%{transform:scale(2);opacity:0}}</style>`,
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
-            });
-            
-            employeeMarker = L.marker([lat, lng], { icon: pulsingIcon }).addTo(employeeMap);
-            employeeMarker.bindPopup('<b>📍 Tu ubicación actual</b>').openPopup();
-            
-            // Inicializar línea del recorrido
-            pathCoordinates = [[lat, lng]];
-            employeePath = L.polyline(pathCoordinates, {
-                color: '#3b82f6',
-                weight: 4,
-                opacity: 0.8
-            }).addTo(employeeMap);
-            
-            // Agregar círculo de precisión
-            L.circle([lat, lng], {
-                radius: 50,
-                color: '#10b981',
-                fillColor: '#10b981',
-                fillOpacity: 0.1,
-                weight: 2
-            }).addTo(employeeMap);
+            try {
+                // Crear nuevo mapa
+                employeeMap = L.map('employeeLiveMap').setView([lat, lng], 17);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(employeeMap);
+                
+                // Crear marcador animado
+                const pulsingIcon = L.divIcon({
+                    className: '',
+                    html: `<div style="position:relative;">
+                        <div style="width:20px;height:20px;background:#ef4444;border-radius:50%;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.3);"></div>
+                        <div style="position:absolute;top:-5px;left:-5px;width:30px;height:30px;background:rgba(239,68,68,0.3);border-radius:50%;animation:pulse-marker 2s infinite;"></div>
+                    </div>
+                    <style>@keyframes pulse-marker{0%{transform:scale(1);opacity:1}100%{transform:scale(2);opacity:0}}</style>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                });
+                
+                employeeMarker = L.marker([lat, lng], { icon: pulsingIcon }).addTo(employeeMap);
+                employeeMarker.bindPopup('<b>📍 Tu ubicación actual</b>').openPopup();
+                
+                // Inicializar línea del recorrido
+                pathCoordinates = [[lat, lng]];
+                employeePath = L.polyline(pathCoordinates, {
+                    color: '#3b82f6',
+                    weight: 4,
+                    opacity: 0.8
+                }).addTo(employeeMap);
+                
+                // Agregar círculo de precisión (radio de 50m como referencia)
+                L.circle([lat, lng], {
+                    radius: 50,
+                    color: '#10b981',
+                    fillColor: '#10b981',
+                    fillOpacity: 0.1,
+                    weight: 2
+                }).addTo(employeeMap);
+                
+                console.log('✅ Mapa inicializado correctamente');
+            } catch(e) {
+                console.error('❌ Error al inicializar mapa:', e);
+            }
         }
         
         // Actualizar posición en el mapa
         function updateMapPosition(lat, lng) {
-            if (!employeeMap || !employeeMarker) return;
-            
-            // Mover marcador suavemente
-            employeeMarker.setLatLng([lat, lng]);
-            
-            // Agregar punto al recorrido
-            pathCoordinates.push([lat, lng]);
-            if (employeePath) {
-                employeePath.setLatLngs(pathCoordinates);
+            if (!employeeMap || !employeeMarker) {
+                console.warn('⚠️ Mapa no inicializado, inicializando...');
+                initEmployeeMap(lat, lng);
+                return;
             }
             
-            // Centrar mapa en nueva posición
-            employeeMap.panTo([lat, lng], { animate: true, duration: 0.5 });
+            try {
+                // Mover marcador suavemente
+                employeeMarker.setLatLng([lat, lng]);
+                
+                // Solo agregar al recorrido si se movió más de 5 metros
+                const lastPoint = pathCoordinates[pathCoordinates.length - 1];
+                if (lastPoint) {
+                    const distance = calculateDistance(lastPoint[0], lastPoint[1], lat, lng);
+                    if (distance > 5) { // Solo agregar si se movió más de 5 metros
+                        pathCoordinates.push([lat, lng]);
+                        if (employeePath) {
+                            employeePath.setLatLngs(pathCoordinates);
+                        }
+                    }
+                } else {
+                    pathCoordinates.push([lat, lng]);
+                }
+                
+                // Centrar mapa en nueva posición
+                employeeMap.panTo([lat, lng], { animate: true, duration: 0.5 });
+            } catch(e) {
+                console.error('❌ Error al actualizar posición:', e);
+            }
         }
         
         // Iniciar tracking continuo con mapa en vivo
         function startLocationTracking() {
-            if (trackingActive) return;
-            trackingActive = true;
-            updateCounter = 0;
+            if (trackingActive) {
+                console.log('⚠️ Tracking ya está activo');
+                return;
+            }
             
             if (!navigator.geolocation) {
                 console.error('Geolocalización no soportada');
@@ -937,11 +985,15 @@
                 return;
             }
             
+            trackingActive = true;
+            updateCounter = 0;
+            lastSavedPosition = null;
+            
             console.log('🟢 Iniciando tracking en tiempo real...');
             
             // Usar watchPosition para tracking CONTINUO
             locationWatchId = navigator.geolocation.watchPosition(
-                async (pos) => {
+                (pos) => {
                     updateCounter++;
                     
                     const newLocation = {
@@ -966,9 +1018,10 @@
                     // Actualizar interfaz
                     updateLiveLocationUI(newLocation);
                     
-                    // Guardar en historial cada 30 segundos (cada 3 actualizaciones aprox)
-                    if (updateCounter % 3 === 0) {
-                        await saveLocationToHistory(newLocation);
+                    // Guardar en historial solo si se movió significativamente o pasó tiempo
+                    const shouldSave = shouldSaveLocation(newLocation);
+                    if (shouldSave) {
+                        saveLocationToHistory(newLocation);
                     }
                     
                     console.log(`📍 [${updateCounter}] Lat: ${newLocation.latitude.toFixed(6)}, Lng: ${newLocation.longitude.toFixed(6)}, Precisión: ${newLocation.accuracy.toFixed(0)}m`);
@@ -980,15 +1033,45 @@
                         statusEl.style.background = '#f59e0b';
                         statusEl.textContent = '⚠️ GPS ERROR';
                     }
+                    
+                    // Intentar reconectar después de 5 segundos
+                    if (trackingActive) {
+                        setTimeout(() => {
+                            if (trackingActive && locationWatchId === null) {
+                                console.log('🔄 Intentando reconectar GPS...');
+                                startLocationTracking();
+                            }
+                        }, 5000);
+                    }
                 },
                 {
                     enableHighAccuracy: true,  // Máxima precisión (usa GPS)
-                    timeout: 10000,            // 10 segundos máximo de espera
-                    maximumAge: 0              // NUNCA usar caché, siempre ubicación fresca
+                    timeout: 15000,            // 15 segundos máximo de espera
+                    maximumAge: 5000           // Permitir ubicación de hasta 5 segundos de antigüedad
                 }
             );
             
             console.log('✅ Tracking iniciado con watchId:', locationWatchId);
+        }
+        
+        // Determinar si debe guardar la ubicación
+        function shouldSaveLocation(newLoc) {
+            // Siempre guardar la primera ubicación
+            if (!lastSavedPosition) return true;
+            
+            // Guardar si se movió más de 30 metros
+            const distance = calculateDistance(
+                lastSavedPosition.latitude, lastSavedPosition.longitude,
+                newLoc.latitude, newLoc.longitude
+            );
+            if (distance > 30) return true;
+            
+            // Guardar cada 60 segundos aunque no se mueva
+            const lastTime = new Date(lastSavedPosition.timestamp).getTime();
+            const newTime = new Date(newLoc.timestamp).getTime();
+            if ((newTime - lastTime) > 60000) return true;
+            
+            return false;
         }
         
         // Actualizar UI de ubicación en vivo
@@ -998,27 +1081,41 @@
             
             geoInfo.style.display = 'block';
             
-            // Actualizar coordenadas
-            document.getElementById('geoLat').textContent = loc.latitude.toFixed(6);
-            document.getElementById('geoLng').textContent = loc.longitude.toFixed(6);
-            document.getElementById('geoAccuracy').textContent = loc.accuracy.toFixed(0) + 'm';
+            // Actualizar coordenadas con verificación de elementos
+            const latEl = document.getElementById('geoLat');
+            const lngEl = document.getElementById('geoLng');
+            const accEl = document.getElementById('geoAccuracy');
+            const speedEl = document.getElementById('geoSpeed');
+            const lastUpdateEl = document.getElementById('lastUpdateText');
+            const historyCountEl = document.getElementById('locationHistoryCount');
+            const statusEl = document.getElementById('trackingStatus');
+            const addressEl = document.getElementById('geoAddress');
             
-            // Velocidad (convertir m/s a km/h) - manejar null/undefined
-            const speed = loc.speed || 0;
-            const speedKmh = (speed * 3.6).toFixed(1);
-            document.getElementById('geoSpeed').textContent = speedKmh + ' km/h';
+            if (latEl) latEl.textContent = loc.latitude.toFixed(6);
+            if (lngEl) lngEl.textContent = loc.longitude.toFixed(6);
+            if (accEl) accEl.textContent = loc.accuracy.toFixed(0) + 'm';
+            
+            // Velocidad (convertir m/s a km/h)
+            if (speedEl) {
+                const speed = loc.speed || 0;
+                const speedKmh = (speed * 3.6).toFixed(1);
+                speedEl.textContent = speedKmh + ' km/h';
+            }
             
             // Última actualización
-            const now = new Date();
-            document.getElementById('lastUpdateText').textContent = now.toLocaleTimeString('es-PE');
+            if (lastUpdateEl) {
+                const now = new Date();
+                lastUpdateEl.textContent = now.toLocaleTimeString('es-PE');
+            }
             
             // Contador de ubicaciones
-            document.getElementById('locationHistoryCount').innerHTML = 
-                `📊 Ubicaciones: <strong>${locationHistory.length}</strong>`;
+            if (historyCountEl) {
+                historyCountEl.innerHTML = `📊 Ubicaciones: <strong>${locationHistory.length}</strong>`;
+            }
             
-            // Indicador de estado
-            const statusEl = document.getElementById('trackingStatus');
+            // Indicador de estado según precisión
             if (statusEl) {
+                statusEl.style.animation = 'blink 1s infinite';
                 if (loc.accuracy <= 20) {
                     statusEl.style.background = '#10b981';
                     statusEl.textContent = '🟢 EXCELENTE';
@@ -1034,40 +1131,52 @@
                 }
             }
             
-            // Obtener dirección (solo cada 5 actualizaciones para no sobrecargar)
-            if (updateCounter % 5 === 1) {
+            // Obtener dirección (solo cada 5 actualizaciones para no sobrecargar API)
+            if (addressEl && updateCounter % 5 === 1) {
                 getAddress(loc.latitude, loc.longitude).then(addr => {
-                    document.getElementById('geoAddress').textContent = addr;
+                    if (addressEl) addressEl.textContent = addr;
+                }).catch(() => {
+                    if (addressEl) addressEl.textContent = 'No disponible';
                 });
             }
         }
         
         // Guardar ubicación en historial
-        async function saveLocationToHistory(loc) {
-            if (!todayRecord || !todayRecord.entryTime || todayRecord.exitTime) return;
-            
-            const locWithAddress = { ...loc };
-            // Solo obtener dirección cada cierto tiempo
-            if (locationHistory.length % 10 === 0) {
-                locWithAddress.address = await getAddress(loc.latitude, loc.longitude);
+        function saveLocationToHistory(loc) {
+            if (!todayRecord || !todayRecord.entryTime || todayRecord.exitTime) {
+                console.log('⚠️ No hay registro activo para guardar ubicación');
+                return;
             }
             
-            locationHistory.push(locWithAddress);
+            if (!currentUser) {
+                console.log('⚠️ No hay usuario actual');
+                return;
+            }
+            
+            const locToSave = { ...loc };
+            lastSavedPosition = locToSave;
+            
+            locationHistory.push(locToSave);
             
             // Guardar en registro
-            const records = getRecords();
-            const key = `${currentUser.username}_${getTodayKey()}`;
-            if (records[key]) {
-                records[key].locationHistory = locationHistory;
-                records[key].lastLocation = locWithAddress;
-                saveRecords(records);
+            try {
+                const records = getRecords();
+                const key = `${currentUser.username}_${getTodayKey()}`;
+                if (records[key]) {
+                    records[key].locationHistory = locationHistory;
+                    records[key].lastLocation = locToSave;
+                    saveRecords(records);
+                    console.log(`💾 Ubicación #${locationHistory.length} guardada en historial`);
+                }
+            } catch(e) {
+                console.error('❌ Error guardando ubicación:', e);
             }
-            
-            console.log(`💾 Ubicación #${locationHistory.length} guardada en historial`);
         }
         
         // Detener tracking
         function stopLocationTracking() {
+            console.log('🛑 Deteniendo tracking...');
+            
             if (locationWatchId !== null) {
                 navigator.geolocation.clearWatch(locationWatchId);
                 locationWatchId = null;
@@ -1075,8 +1184,10 @@
             
             trackingActive = false;
             currentLocation = null;
-            pathCoordinates = [];
+            lastSavedPosition = null;
             updateCounter = 0;
+            
+            // NO limpiar pathCoordinates para mantener el recorrido visible
             
             // Actualizar estado visual
             const statusEl = document.getElementById('trackingStatus');
@@ -1086,15 +1197,43 @@
                 statusEl.style.animation = 'none';
             }
             
-            console.log('🔴 Tracking detenido');
+            console.log('🔴 Tracking detenido completamente');
+        }
+        
+        // Limpiar mapa del empleado (al cerrar sesión)
+        function cleanupEmployeeMap() {
+            if (employeeMap) {
+                try {
+                    employeeMap.remove();
+                } catch(e) {}
+                employeeMap = null;
+                employeeMarker = null;
+                employeePath = null;
+            }
+            pathCoordinates = [];
+            locationHistory = [];
         }
         
         async function getAddress(lat, lng) {
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+                if (!res.ok) throw new Error('Error de red');
                 const data = await res.json();
+                
+                // Construir dirección más corta y legible
+                if (data.address) {
+                    const parts = [];
+                    if (data.address.road) parts.push(data.address.road);
+                    if (data.address.house_number) parts[0] += ' ' + data.address.house_number;
+                    if (data.address.suburb) parts.push(data.address.suburb);
+                    if (data.address.city || data.address.town) parts.push(data.address.city || data.address.town);
+                    if (parts.length > 0) return parts.join(', ');
+                }
                 return data.display_name || 'No disponible';
-            } catch(e) { return 'No disponible'; }
+            } catch(e) { 
+                console.warn('⚠️ Error obteniendo dirección:', e);
+                return 'No disponible'; 
+            }
         }
 
         // LOGIN
@@ -1147,8 +1286,10 @@
         }
         function logout() { 
             stopLocationTracking(); // Detener tracking al cerrar sesión
+            cleanupEmployeeMap(); // Limpiar mapa
             sessionStorage.removeItem('currentUser'); 
             currentUser = null; 
+            todayRecord = null;
             if(clockInterval) clearInterval(clockInterval); 
             showScreen('loginScreen'); 
         }
