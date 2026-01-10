@@ -173,7 +173,7 @@
                     <div class="demo-card" onclick="fillLogin('demo@empresa.com','demo123')" style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.05));border-color:rgba(245,158,11,0.3);margin-top:10px;">
                         <strong style="color:var(--warning-color);">🏢 Empresa Sin Acceso</strong>
                         <span style="background:rgba(239,68,68,0.2);color:var(--danger-color);padding:2px 8px;border-radius:10px;font-size:0.7rem;margin-left:8px;">PENDIENTE</span><br>
-                        <small style="color:var(--text-muted);">Email: <code>demo@empresa.com</code> | Pass: <code>demo123</code></small>
+                        <small style="color:var(--text-muted);">Email: <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a7c3c2cac8e7c2cad7d5c2d4c689c4c8ca">[email&#160;protected]</a></code> | Pass: <code>demo123</code></small>
                     </div>
                 </div>
                 <button onclick="resetAllData()" style="width:100%;margin-top:15px;background:transparent;border:1px solid var(--card-border);color:var(--text-muted);padding:8px;border-radius:8px;cursor:pointer;font-size:0.8rem;">🔄 Resetear Datos Demo</button>
@@ -207,7 +207,7 @@
                         Para activar el servicio, comuníquese con el administrador de la plataforma:
                     </p>
                     <div style="background:rgba(37,99,235,0.2);padding:15px;border-radius:10px;">
-                        <span style="font-size:1.2rem;font-weight:700;color:var(--primary-color);">📧 soporte@sistema.com</span>
+                        <span style="font-size:1.2rem;font-weight:700;color:var(--primary-color);">📧 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a8dbc7d8c7dadccde8dbc1dbdccdc5c986cbc7c5">[email&#160;protected]</a></span>
                     </div>
                 </div>
                 
@@ -563,6 +563,20 @@
                 <button class="modal-close" onclick="closeDetailModal()">×</button>
             </div>
             <div id="detailModalHeader" style="margin-bottom:20px;"></div>
+            
+            <!-- MAPA EN VIVO DEL EMPLEADO -->
+            <div id="detailMapSection" style="display:none;margin-bottom:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <h3 style="margin:0;">🗺️ Ubicación en Tiempo Real</h3>
+                    <div id="detailMapStatus" style="display:flex;align-items:center;gap:10px;">
+                        <span id="detailMapLastUpdate" style="font-size:0.8rem;color:var(--text-muted);">--</span>
+                        <button class="btn btn-sm btn-primary" onclick="refreshDetailMap()">🔄 Actualizar</button>
+                    </div>
+                </div>
+                <div class="map-container" style="height:300px;border:2px solid var(--primary-color);"><div id="detailMap"></div></div>
+                <div id="detailMapInfo" style="margin-top:10px;padding:15px;background:rgba(37,99,235,0.1);border-radius:10px;display:none;"></div>
+            </div>
+            
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
                 <h3 style="margin:0;color:var(--text-secondary);">📅 Filtrar por Mes</h3>
                 <select id="detailMonthFilter" class="form-input" style="width:auto;" onchange="updateDetailModal()"></select>
@@ -721,7 +735,7 @@
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // CONFIG
         const USERS_KEY = 'geo_users';
@@ -1990,6 +2004,7 @@
 
         // EMPLOYEE DETAIL MODAL
         let currentDetailEmployee = null;
+        let detailMapInterval = null;
         
         function showEmpDetail(username) {
             currentDetailEmployee = username;
@@ -2032,7 +2047,190 @@
             `;
             
             document.getElementById('detailModal').classList.add('show');
+            
+            // Inicializar mapa del empleado en detalle
+            initDetailMap(username);
+            
             updateDetailModal();
+        }
+        
+        function initDetailMap(username) {
+            const records = getRecords();
+            const todayKey = getTodayKey();
+            const key = `${username}_${todayKey}`;
+            const rec = records[key];
+            
+            const mapSection = document.getElementById('detailMapSection');
+            const mapInfo = document.getElementById('detailMapInfo');
+            
+            // Verificar si el empleado tiene registro hoy
+            if (!rec || !rec.entryLoc) {
+                mapSection.style.display = 'none';
+                return;
+            }
+            
+            mapSection.style.display = 'block';
+            
+            // Limpiar mapa anterior
+            if (detailMap) {
+                try { detailMap.remove(); } catch(e) {}
+                detailMap = null;
+            }
+            
+            // Limpiar intervalo anterior
+            if (detailMapInterval) {
+                clearInterval(detailMapInterval);
+                detailMapInterval = null;
+            }
+            
+            setTimeout(() => {
+                // Crear mapa
+                const centerLat = rec.lastLocation ? rec.lastLocation.latitude : rec.entryLoc.latitude;
+                const centerLng = rec.lastLocation ? rec.lastLocation.longitude : rec.entryLoc.longitude;
+                
+                detailMap = L.map('detailMap').setView([centerLat, centerLng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(detailMap);
+                
+                // Cargar marcadores
+                loadDetailMapMarkers(username);
+                
+                // Actualizar cada 10 segundos si está trabajando
+                if (rec.entryTime && !rec.exitTime) {
+                    detailMapInterval = setInterval(() => {
+                        loadDetailMapMarkers(username);
+                    }, 10000);
+                }
+            }, 200);
+        }
+        
+        function loadDetailMapMarkers(username) {
+            if (!detailMap) return;
+            
+            const records = getRecords();
+            const todayKey = getTodayKey();
+            const key = `${username}_${todayKey}`;
+            const rec = records[key];
+            const users = getUsers();
+            const emp = users[username];
+            
+            if (!rec || !rec.entryLoc) return;
+            
+            // Limpiar marcadores existentes
+            detailMap.eachLayer(layer => {
+                if (layer instanceof L.Marker || layer instanceof L.Polyline || layer instanceof L.Circle) {
+                    detailMap.removeLayer(layer);
+                }
+            });
+            
+            const bounds = [];
+            
+            // Marcador de entrada
+            const greenIcon = L.divIcon({
+                className: '',
+                html: `<div style="background:#10b981;color:white;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.3);">🟢 ENTRADA ${rec.entryTime}</div>`,
+                iconSize: [130, 30]
+            });
+            L.marker([rec.entryLoc.latitude, rec.entryLoc.longitude], { icon: greenIcon })
+                .addTo(detailMap)
+                .bindPopup(`<b>Entrada: ${rec.entryTime}</b><br><small>${rec.entryLoc.address || 'Sin dirección'}</small>`);
+            bounds.push([rec.entryLoc.latitude, rec.entryLoc.longitude]);
+            
+            // Dibujar recorrido si existe
+            if (rec.locationHistory && rec.locationHistory.length > 1) {
+                const routePoints = rec.locationHistory.map(loc => [loc.latitude, loc.longitude]);
+                L.polyline(routePoints, {
+                    color: '#3b82f6',
+                    weight: 4,
+                    opacity: 0.8
+                }).addTo(detailMap);
+                
+                // Puntos intermedios
+                rec.locationHistory.forEach((loc, idx) => {
+                    if (idx > 0 && idx < rec.locationHistory.length - 1) {
+                        bounds.push([loc.latitude, loc.longitude]);
+                    }
+                });
+            }
+            
+            // Última ubicación EN VIVO
+            if (rec.lastLocation && !rec.exitTime) {
+                const lastTime = rec.lastLocation.timestamp 
+                    ? new Date(rec.lastLocation.timestamp).toLocaleTimeString('es-PE') 
+                    : 'Ahora';
+                
+                // Círculo de precisión
+                L.circle([rec.lastLocation.latitude, rec.lastLocation.longitude], {
+                    radius: rec.lastLocation.accuracy || 50,
+                    color: '#ef4444',
+                    fillColor: '#ef4444',
+                    fillOpacity: 0.15,
+                    weight: 2
+                }).addTo(detailMap);
+                
+                // Marcador EN VIVO
+                const liveIcon = L.divIcon({
+                    className: '',
+                    html: `<div style="background:linear-gradient(135deg,#ef4444,#f59e0b);color:white;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 15px rgba(239,68,68,0.5);animation:pulse-detail 1.5s infinite;">
+                        🔴 AHORA - ${lastTime}
+                    </div>
+                    <style>@keyframes pulse-detail{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}</style>`,
+                    iconSize: [150, 35]
+                });
+                L.marker([rec.lastLocation.latitude, rec.lastLocation.longitude], { icon: liveIcon })
+                    .addTo(detailMap)
+                    .bindPopup(`<b>📍 Última ubicación</b><br>Hora: ${lastTime}<br>Precisión: ${rec.lastLocation.accuracy?.toFixed(0) || '?'}m`);
+                bounds.push([rec.lastLocation.latitude, rec.lastLocation.longitude]);
+                
+                // Mostrar info
+                document.getElementById('detailMapInfo').style.display = 'block';
+                document.getElementById('detailMapInfo').innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;">
+                        <div><strong>📍 Última posición:</strong><br>${lastTime}</div>
+                        <div><strong>🎯 Precisión:</strong><br>${rec.lastLocation.accuracy?.toFixed(0) || '?'} metros</div>
+                        <div><strong>📊 Ubicaciones:</strong><br>${rec.locationHistory ? rec.locationHistory.length : 0} registradas</div>
+                        <div><strong>🚶 Estado:</strong><br><span style="color:#10b981;font-weight:bold;">🟢 TRABAJANDO</span></div>
+                    </div>
+                `;
+            }
+            
+            // Marcador de salida
+            if (rec.exitLoc) {
+                const redIcon = L.divIcon({
+                    className: '',
+                    html: `<div style="background:#ef4444;color:white;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.3);">🔴 SALIDA ${rec.exitTime}</div>`,
+                    iconSize: [130, 30]
+                });
+                L.marker([rec.exitLoc.latitude, rec.exitLoc.longitude], { icon: redIcon })
+                    .addTo(detailMap)
+                    .bindPopup(`<b>Salida: ${rec.exitTime}</b><br><small>${rec.exitLoc.address || 'Sin dirección'}</small>`);
+                bounds.push([rec.exitLoc.latitude, rec.exitLoc.longitude]);
+                
+                // Actualizar info
+                document.getElementById('detailMapInfo').style.display = 'block';
+                document.getElementById('detailMapInfo').innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;">
+                        <div><strong>🟢 Entrada:</strong><br>${rec.entryTime}</div>
+                        <div><strong>🔴 Salida:</strong><br>${rec.exitTime}</div>
+                        <div><strong>📊 Ubicaciones:</strong><br>${rec.locationHistory ? rec.locationHistory.length : 0} registradas</div>
+                        <div><strong>✅ Estado:</strong><br><span style="color:#3b82f6;font-weight:bold;">FINALIZADO</span></div>
+                    </div>
+                `;
+            }
+            
+            // Actualizar timestamp
+            document.getElementById('detailMapLastUpdate').textContent = '🔄 ' + new Date().toLocaleTimeString('es-PE');
+            
+            // Ajustar vista
+            if (bounds.length > 0) {
+                detailMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 17 });
+            }
+        }
+        
+        function refreshDetailMap() {
+            if (currentDetailEmployee) {
+                loadDetailMapMarkers(currentDetailEmployee);
+                notify('🗺️ Mapa actualizado', 'success');
+            }
         }
         
         function updateDetailModal() {
@@ -2207,6 +2405,18 @@
         function closeDetailModal() {
             document.getElementById('detailModal').classList.remove('show');
             currentDetailEmployee = null;
+            
+            // Limpiar intervalo del mapa
+            if (detailMapInterval) {
+                clearInterval(detailMapInterval);
+                detailMapInterval = null;
+            }
+            
+            // Limpiar mapa
+            if (detailMap) {
+                try { detailMap.remove(); } catch(e) {}
+                detailMap = null;
+            }
         }
 
         // ADMIN HISTORY
@@ -2286,21 +2496,48 @@
 
         // MAP FUNCTIONS
         let polylines = []; // Para guardar las líneas del recorrido
+        let adminMapInterval = null; // Intervalo de actualización
+        let lastMapUpdate = null; // Última actualización
         
         function initAdminMap() {
+            if (adminMap) {
+                try { adminMap.remove(); } catch(e) {}
+            }
+            
             adminMap = L.map('adminMap').setView([-12.0464, -77.0428], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(adminMap);
+            
+            // Agregar control de última actualización
+            const updateControl = L.control({ position: 'topright' });
+            updateControl.onAdd = function() {
+                const div = L.DomUtil.create('div', 'leaflet-bar');
+                div.id = 'mapUpdateInfo';
+                div.style.cssText = 'background:white;padding:8px 12px;border-radius:8px;font-size:12px;box-shadow:0 2px 10px rgba(0,0,0,0.2);';
+                div.innerHTML = '🔄 Cargando...';
+                return div;
+            };
+            updateControl.addTo(adminMap);
+            
             loadMapMarkers();
             
-            // Actualizar mapa cada 30 segundos para ver ubicaciones en vivo
-            setInterval(loadMapMarkers, 30000);
+            // Limpiar intervalo anterior si existe
+            if (adminMapInterval) clearInterval(adminMapInterval);
+            
+            // Actualizar mapa cada 10 segundos para ver ubicaciones en vivo
+            adminMapInterval = setInterval(() => {
+                loadMapMarkers();
+                console.log('🗺️ Mapa actualizado automáticamente');
+            }, 10000);
+            
+            console.log('✅ Mapa del admin inicializado con actualización cada 10s');
         }
+        
         function loadMapMarkers() {
             if(!adminMap) return;
             
-            // Limpiar marcadores y líneas existentes
+            // Limpiar marcadores y líneas existentes (excepto el tile layer)
             adminMap.eachLayer(layer => { 
-                if(layer instanceof L.Marker || layer instanceof L.Polyline) {
+                if(layer instanceof L.Marker || layer instanceof L.Polyline || layer instanceof L.Circle) {
                     adminMap.removeLayer(layer); 
                 }
             });
@@ -2309,14 +2546,20 @@
             const records = getRecords();
             const todayKey = getTodayKey();
             const bounds = [];
+            let workingCount = 0;
+            let finishedCount = 0;
             
             emps.forEach(emp => {
                 const key = `${emp.username}_${todayKey}`;
                 const rec = records[key];
                 
                 if(rec && rec.entryLoc) {
-                    // Marcador de entrada
-                    const greenIcon = L.divIcon({ className:'', html:`<div style="background:#10b981;color:white;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.3);">🟢 ${emp.fullName}</div>`, iconSize:[120,30] });
+                    // Marcador de entrada (verde)
+                    const greenIcon = L.divIcon({ 
+                        className:'', 
+                        html:`<div style="background:#10b981;color:white;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.3);">🟢 ${emp.fullName}</div>`, 
+                        iconSize:[120,30] 
+                    });
                     L.marker([rec.entryLoc.latitude, rec.entryLoc.longitude], {icon:greenIcon})
                         .addTo(adminMap)
                         .bindPopup(`<b>${emp.fullName}</b><br>Entrada: ${rec.entryTime}<br><small>${rec.entryLoc.address||'Sin dirección'}</small>`);
@@ -2325,7 +2568,7 @@
                     // Si tiene historial de ubicaciones, dibujar recorrido
                     if(rec.locationHistory && rec.locationHistory.length > 1) {
                         const routePoints = rec.locationHistory.map(loc => [loc.latitude, loc.longitude]);
-                        const polyline = L.polyline(routePoints, {
+                        L.polyline(routePoints, {
                             color: '#3b82f6',
                             weight: 3,
                             opacity: 0.7,
@@ -2348,33 +2591,80 @@
                         });
                     }
                     
-                    // Mostrar última ubicación conocida (en vivo) si aún no marcó salida
+                    // Mostrar última ubicación conocida (EN VIVO) si aún no marcó salida
                     if(rec.lastLocation && !rec.exitTime) {
-                        const lastTime = rec.lastLocation.timestamp ? new Date(rec.lastLocation.timestamp).toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit'}) : 'Ahora';
+                        workingCount++;
+                        const lastTime = rec.lastLocation.timestamp ? new Date(rec.lastLocation.timestamp).toLocaleTimeString('es-PE', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : 'Ahora';
+                        const accuracy = rec.lastLocation.accuracy ? rec.lastLocation.accuracy.toFixed(0) : '?';
+                        
+                        // Círculo de precisión
+                        L.circle([rec.lastLocation.latitude, rec.lastLocation.longitude], {
+                            radius: rec.lastLocation.accuracy || 50,
+                            color: '#f59e0b',
+                            fillColor: '#f59e0b',
+                            fillOpacity: 0.1,
+                            weight: 2
+                        }).addTo(adminMap);
+                        
+                        // Marcador EN VIVO pulsante
                         const liveIcon = L.divIcon({ 
                             className:'', 
-                            html:`<div style="background:#f59e0b;color:white;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.3);animation:pulse 2s infinite;">🔴 EN VIVO - ${emp.fullName}</div>
-                            <style>@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}</style>`, 
-                            iconSize:[150,30] 
+                            html:`<div style="background:linear-gradient(135deg,#ef4444,#f59e0b);color:white;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 15px rgba(239,68,68,0.5);animation:pulse-live 1.5s infinite;">
+                                🔴 EN VIVO - ${emp.fullName}
+                            </div>
+                            <style>@keyframes pulse-live{0%,100%{transform:scale(1);box-shadow:0 2px 15px rgba(239,68,68,0.5)}50%{transform:scale(1.05);box-shadow:0 2px 25px rgba(239,68,68,0.8)}}</style>`, 
+                            iconSize:[180,35] 
                         });
-                        const accuracy = rec.lastLocation.accuracy ? rec.lastLocation.accuracy.toFixed(0) : '?';
                         L.marker([rec.lastLocation.latitude, rec.lastLocation.longitude], {icon:liveIcon})
                             .addTo(adminMap)
-                            .bindPopup(`<b>🔴 ${emp.fullName} - EN VIVO</b><br>Última actualización: ${lastTime}<br>Precisión: ${accuracy}m<br><small>${rec.lastLocation.address||'Sin dirección'}</small>`);
+                            .bindPopup(`
+                                <div style="min-width:200px;">
+                                    <h4 style="margin:0 0 10px;color:#ef4444;">🔴 ${emp.fullName}</h4>
+                                    <p style="margin:5px 0;"><b>⏰ Última actualización:</b> ${lastTime}</p>
+                                    <p style="margin:5px 0;"><b>📍 Precisión:</b> ${accuracy}m</p>
+                                    <p style="margin:5px 0;font-size:11px;color:#666;">${rec.lastLocation.address||'Sin dirección'}</p>
+                                    <p style="margin:10px 0 0;padding-top:10px;border-top:1px solid #eee;font-size:11px;color:#888;">
+                                        📊 Ubicaciones registradas: ${rec.locationHistory ? rec.locationHistory.length : 0}
+                                    </p>
+                                </div>
+                            `);
                         bounds.push([rec.lastLocation.latitude, rec.lastLocation.longitude]);
                     }
-                }
-                
-                if(rec && rec.exitLoc) {
-                    const redIcon = L.divIcon({ className:'', html:`<div style="background:#ef4444;color:white;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.3);">🔴 ${emp.fullName}</div>`, iconSize:[120,30] });
-                    L.marker([rec.exitLoc.latitude, rec.exitLoc.longitude], {icon:redIcon})
-                        .addTo(adminMap)
-                        .bindPopup(`<b>${emp.fullName}</b><br>Salida: ${rec.exitTime}<br><small>${rec.exitLoc.address||'Sin dirección'}</small>`);
-                    bounds.push([rec.exitLoc.latitude, rec.exitLoc.longitude]);
+                    
+                    // Marcador de salida (rojo)
+                    if(rec.exitLoc) {
+                        finishedCount++;
+                        const redIcon = L.divIcon({ 
+                            className:'', 
+                            html:`<div style="background:#ef4444;color:white;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,0.3);">🔴 ${emp.fullName} (Salida)</div>`, 
+                            iconSize:[140,30] 
+                        });
+                        L.marker([rec.exitLoc.latitude, rec.exitLoc.longitude], {icon:redIcon})
+                            .addTo(adminMap)
+                            .bindPopup(`<b>${emp.fullName}</b><br>Salida: ${rec.exitTime}<br><small>${rec.exitLoc.address||'Sin dirección'}</small>`);
+                        bounds.push([rec.exitLoc.latitude, rec.exitLoc.longitude]);
+                    }
                 }
             });
             
-            if(bounds.length > 0) adminMap.fitBounds(bounds, {padding:[50,50]});
+            // Actualizar indicador de última actualización
+            lastMapUpdate = new Date();
+            const updateInfo = document.getElementById('mapUpdateInfo');
+            if (updateInfo) {
+                updateInfo.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="color:#10b981;">●</span>
+                        <span>🔄 ${lastMapUpdate.toLocaleTimeString('es-PE')}</span>
+                    </div>
+                    <div style="font-size:10px;color:#666;margin-top:3px;">
+                        🟢 ${workingCount} trabajando | ✅ ${finishedCount} finalizados
+                    </div>
+                `;
+            }
+            
+            if(bounds.length > 0) {
+                adminMap.fitBounds(bounds, {padding:[50,50], maxZoom: 16});
+            }
         }
         function showLoc(lat, lng, address) {
             document.getElementById('locModal').classList.add('show');
@@ -2697,15 +2987,3 @@
                             punctuality,
                             lateMinutes,
                             detail
-                        ]);
-                    }
-                }
-            });
-            
-            const monthName = getMonthName(month);
-            const empName = empFilter === 'all' ? 'Todos' : filteredEmps[0]?.fullName || 'Empleado';
-            exportToExcel(data, `Asistencia_${empName}_${monthName}_${year}`);
-        }
-    </script>
-</body>
-</html>
