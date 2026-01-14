@@ -2987,3 +2987,13 @@
                             punctuality,
                             lateMinutes,
                             detail
+                        ]);
+                    }
+                }
+            });
+
+            const monthName = getMonthName(month);
+            exportToExcel(data, `Asistencia_Admin_${monthName}_${year}`);
+        }
+    </script>
+</html>
